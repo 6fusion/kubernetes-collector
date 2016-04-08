@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kube-secret
+  namespace: 6fusion-system
+data:
+  kube-host: "MTcyLjE3LjguMjAxCg=="
+  kube-port: "ODA4MAo="
+  kube-token: ""
+  cadvisor-host: "MTcyLjE3LjguMjAxCg=="
+  cadvisor-port: "NDE5NAo="
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: on-premise-secret
+  namespace: 6fusion-system
+data:
+  host: "MTEuMS4yLjkK"
+  port: "ODAK"
+  token: ""
+  organization-id: "MQo="
+  infrastructure-id: "MQo="
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: 6fusion-k8scollector
+  namespace: 6fusion-system
+  labels:
+    6fusion-app: k8scollector
+spec:
+  containers:
+  - name: k8scollector
+    image: localhost:5000/k8scollector
+    volumeMounts:
+    - name: k8scollector-app
+      mountPath: /usr/src/app
+    - name: kube-secret
+      mountPath: /var/run/secrets/k8scollector/kube
+    - name: on-premise-secret
+      mountPath: /var/run/secrets/k8scollector/on-premise
+  - name: k8scollector-mongodb
+    #image: localhost:5000/k8scollector-mongodb
+    image: mongo:3.2
+    volumeMounts:
+    - mountPath: /data/db
+      name: "k8scollector-mongodb"
+  volumes:
+  - name: k8scollector-app
+    hostPath:
+      path: "/home/k8scollector"
+  - name: on-premise-secret
+    secret:
+      secretName: on-premise-secret
+  - name: kube-secret
+    secret:
+      secretName: kube-secret
+  - name: "k8scollector-mongodb"
+    hostPath:
+      path: "/var/lib/k8scollector/data/db"

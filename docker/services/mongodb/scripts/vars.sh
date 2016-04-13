@@ -1,0 +1,6 @@
+#!/bin/sh
+DB_STORAGE_ENGINE="${MONGODB_STORAGEENGINE:-mmapv1}"
+DB_JOURNALING="${MONGODB_JOURNALING:-journal}"
+DB_LOGPATH="/var/log/mongodb/mongodb.log"
+DOCKER_DB_PORT=27017
+DOCKER_DB_MOUNTPOINT="/data/db"

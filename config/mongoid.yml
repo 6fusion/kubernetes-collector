@@ -1,12 +1,12 @@
 development:
-  clients:
+  sessions:
     default:
       database: k8scollector
       hosts:
         - localhost:27017
 
 production:
-  clients:
+  sessions:
     default:
       database: k8scollector
       hosts:

@@ -10,4 +10,10 @@ class Infrastructure
 
   has_many :hosts
   has_many :pods
+
+  def to_payload
+    { name: self.name,
+      tags: self.tags,
+      hosts: self.hosts.all.map {|host| host.to_payload} }
+  end
 end

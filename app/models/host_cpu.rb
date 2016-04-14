@@ -8,4 +8,9 @@ class HostCpu
   validates :speed_hz, presence: true, numericality: { greater_than_or_equal_to: 1 }
 
   belongs_to :host
+
+  def to_payload
+    { cores: self.cores,
+      speed_hz: self.speed_hz }
+  end
 end

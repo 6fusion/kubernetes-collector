@@ -7,6 +7,7 @@ data:
   kube-host: "MTcyLjE3LjguMjAxCg=="
   kube-port: "ODA4MAo="
   kube-token: ""
+  kube-verify-ssl: "MAo="  # Use 1 for true and 0 for false
   cadvisor-host: "MTcyLjE3LjguMjAxCg=="
   cadvisor-port: "NDE5NAo="
 ---
@@ -19,6 +20,8 @@ data:
   host: "MTEuMS4yLjkK"
   port: "ODAK"
   token: ""
+  use-ssl: "MAo="     # Use 1 for true and 0 for false
+  verify-ssl: "MAo="  # Use 1 for true and 0 for false
   organization-id: "MQo="
   infrastructure-id: "MQo="
 ---

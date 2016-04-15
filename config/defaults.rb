@@ -5,6 +5,9 @@ Dir.glob("./app/**/*.rb").each {|file| require file}
 SECRETS_DIR = '/var/run/secrets/k8scollector'
 KUBE_API_VERSION = 'v1'
 CADVISOR_API_VERSION = 'v2.0'
+ONPREMISE_API_VERSION = 'v1'
 
 include K8scollector
+include KubeAPI
+include CAdvisorAPI
 include OnPremiseApi

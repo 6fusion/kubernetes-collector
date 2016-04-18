@@ -10,7 +10,6 @@ class Machine
   field :tags,                 type: Array
   field :status,               type: String     
 
-  validates :remote_id,                           presence: true, uniqueness: true
   validates :name, :virtual_name, :status, :tags, presence: true
   validates :cpu_count,    
             :cpu_speed_mhz,

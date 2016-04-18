@@ -7,7 +7,6 @@ class Nic
   field :ip_address,  type: String
   field :mac_address, type: String
 
-  validates :remote_id,   presence: true, uniqueness: true
   validates :name, 
             :kind,
             :ip_address,

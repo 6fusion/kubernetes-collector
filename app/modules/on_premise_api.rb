@@ -1,4 +1,4 @@
-module OnPremApi
+module OnPremiseApi
 
   def request_api(endpoint, method, config, parameters=nil)
   	RestClient::Request.execute(:url => "#{config.on_premise[:url]}/#{endpoint}", :method => method, 

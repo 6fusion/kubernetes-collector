@@ -1,29 +1,20 @@
 class InventoryCollector
 
+  CONTAINER_NAME_PREFIX = 'container-'
+
   def initialize
   end
 
   def collect(logger, config)
-    namespaces = []
-    pods = []
-    machines = []
     logger.info 'Collecting inventory...'
     verify_organization(logger, config)
     infrastructure = collect_infrastructure(logger, config)
     on_prem_machines = collect_on_prem_machines(config, infrastructure)
-    namespaces = collect_namespaces(logger, config)
-    logger.info "Collected #{namespaces.count} namespaces."
-    namespaces.each do |namespace|
-      # Collect the pods for this namespace
-      collect_pods(logger, config, namespace).each do |pod|
-        collect_machines(logger, config, pod, on_prem_machines).each {|machine| machines << machine}
-        pods << pod
-      end
-      # If there are pods that belong to a service, then tag their machines with the corresponding service
-      tag_service_pods_machines(logger, config, namespace)
-    end
-    logger.info "Collected #{pods.count} pods."
-    logger.info "Collected #{machines.count} machines."
+    collect_machines(logger, config, infrastructure, on_prem_machines)
+    # Collect the pods for this infrastructure so we can update their machines information
+    collect_pods(logger, config).each {|pod| update_pod_machines(logger, config, pod)}
+    # If there are pods that belong to a service, then tag their machines with the corresponding service
+    tag_service_pods_machines(logger, config)
   end
 
   def verify_organization(logger, config)
@@ -54,11 +45,16 @@ class InventoryCollector
       host.host_disks.delete_all
     end
     infrastructure.hosts.delete_all
-    # Recreate host information
-    host = infrastructure.hosts.create(memory_bytes: attributes['memory_capacity'], infrastructure: infrastructure)
-    host.host_cpus.create(cores: attributes['num_cores'], speed_hz: attributes['cpu_frequency_khz'] * 1000)
-    attributes['filesystems'].each {|fs| host.host_disks.create(name: fs['device'].split('/').last, storage_bytes: fs['capacity'])}
-    attributes['network_devices'].each {|nd| host.host_nics.create(name: nd['name'])}
+    # Recreate hosts information
+    nodes_response = KubeAPI::request(config, 'nodes')
+    nodes_response['items'].each do |node|
+      node_ip = node['status']['addresses'][0]['address']
+      node_attributes = CAdvisorAPI::request(config, node_ip, 'attributes')
+      host = infrastructure.hosts.create(ip_address: node_ip, memory_bytes: node_attributes['memory_capacity'], infrastructure: infrastructure)
+      host.host_cpus.create(cores: node_attributes['num_cores'], speed_hz: node_attributes['cpu_frequency_khz'] * 1000)
+      node_attributes['filesystems'].each {|fs| host.host_disks.create(name: fs['device'].split('/').last, storage_bytes: fs['capacity'])}
+      node_attributes['network_devices'].each {|nd| host.host_nics.create(name: nd['name'])}
+    end
     # Look for the remote_id of the infrastructure (if it exists on the on-prem db)
     begin
       OnPremiseApi::request_api('infrastructures', :get, config, {organization_id: infrastructure.organization_id})['embedded']['infrastructures'].each do |i|
@@ -71,18 +67,41 @@ class InventoryCollector
       raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
     end
     infrastructure.save!
+    infrastructure.reload
     infrastructure
   end
 
-  def collect_namespaces(logger, config)
-    logger.info 'Collecting namespaces...'
-    response = KubeAPI::request(config, 'namespaces')
-    response['items']
+  def collect_machines(logger, config, infrastructure, on_prem_machines)
+    infrastructure.hosts.each do |host|
+      logger.info "Collecting machines for host #{host.ip_address}..."
+      response = CAdvisorAPI::request(config, host.ip_address, 'stats/?type=docker&recursive=true&count=1')
+      response.each do |k,v|
+        container_id = k.split('/').last.split('docker-').last.split('.scope').first
+        # Is this a new or an existing machine?
+        begin
+          machine = Machine.find_by(virtual_name: container_id)
+        rescue Mongoid::Errors::DocumentNotFound
+          machine = Machine.new(virtual_name: container_id, name: "#{CONTAINER_NAME_PREFIX}#{container_id[0...8]}")  # The container name might be updated later if this container is attached to a pod
+        end
+        machine.status = 'running'  # Containers retrieved through cAdvisor are running by default
+        machine.tags = ['type:container']
+        host_attributes = CAdvisorAPI::request(config, host.ip_address, 'attributes')
+        machine.cpu_count = host_attributes['num_cores']
+        machine.cpu_speed_hz = host_attributes['cpu_frequency_khz'] * 1000
+        machine.memory_bytes = host_attributes['memory_capacity']
+        machine.remote_id = get_machine_remote_id(machine, on_prem_machines)
+        machine.save!
+
+        collect_machine_disks(logger, config, machine)
+        collect_machine_nics(logger, config, machine)
+      end
+    end
+    logger.info "Total of infrastructure machines: #{Machine.count}."
   end
 
-  def collect_pods(logger, config, namespace)
-    logger.info "Collecting pods for namespace=#{namespace['metadata']['name']}..."
-    response = KubeAPI::request(config, "namespaces/#{namespace['metadata']['name']}/pods")
+  def collect_pods(logger, config)
+    logger.info 'Collecting pods for the infrastructure...'
+    response = KubeAPI::request(config, 'pods')
     response['items'].each do |pod|
       # Is this a new or an existing pod?
       begin
@@ -95,57 +114,45 @@ class InventoryCollector
     response['items']
   end
 
-  def tag_service_pods_machines(logger, config, namespace)
-    logger.info "Collecting services for namespace=#{namespace['metadata']['name']}..."
-    response = KubeAPI::request(config, "namespaces/#{namespace['metadata']['name']}/services")
-    response['items'].each do |service|
-      logger.info "Collecting pods for service=#{service['metadata']['name']}..."
-      label_selector = ''
-      service['spec']['selector'].each {|k, v| label_selector << "#{k}=#{v},"} unless service['spec']['selector'].nil?
-      label_selector = label_selector.to_s.chop  # Remove the last comma from the label selector
-      service_pods_response = KubeAPI::request(config, "namespaces/#{namespace['metadata']['name']}/pods?labelSelector=#{label_selector}")
-      service_pods_response['items'].each do |service_pod|
-        Pod.in(name: service_pod['metadata']['name']).each do |pod|
-          pod.machines.update(tags: ["type:container", "pod:#{service_pod['metadata']['name']}", "service:#{service['metadata']['name']}"])
-        end
-      end
-    end
-  end
-
-  def collect_machines(logger, config, pod, on_prem_machines)
-    logger.info "Collecting machines for pod=#{pod['metadata']['name']}..."
-    machines = []
+  def update_pod_machines(logger, config, pod)
+    logger.info "Updating machines for pod=#{pod['metadata']['name']}..."
     if pod['status']['phase'] == 'Running'
       pod['status']['containerStatuses'].each do |container|
         if container['ready']
           container_id = container['containerID'].split("//").last
           host = pod['status']['hostIP']
-          # Is this a new or an existing machine?
+          # Look for this machine in the cache db
           begin
             machine = Machine.find_by(virtual_name: container_id)
           rescue Mongoid::Errors::DocumentNotFound
-            machine = Machine.new(virtual_name: container_id, name: "#{container['name']}-#{container_id[0...8]}")
+            next
           end
-          machine.status = container["state"].keys.first
-          machine.tags = ['type:container', "pod:#{pod['metadata']['name']}"]
-          host_attributes = CAdvisorAPI::request(config, host, 'attributes')
-          container_attributes = CAdvisorAPI::request(config, host, "spec/#{container_id}?type=docker")
-          machine.cpu_count = host_attributes['num_cores']
-          machine.cpu_speed_hz = host_attributes['cpu_frequency_khz'] * 1000
-          machine.memory_bytes = host_attributes["memory_capacity"]
-          machine.remote_id = get_machine_remote_id(machine, on_prem_machines)
+          machine.name = "#{container['name']}-#{container_id[0...8]}"
+          machine.status = container['state'].keys.first
+          machine.tags = machine.tags + ["pod:#{pod['metadata']['name']}"]
           machine.pod = pod['db_object']
-
-          collect_machine_disks(logger, config, machine)
-          collect_machine_nics(logger, config, machine)
-
           machine.save!
-
-          machines << machine
         end
       end
     end
-    machines
+  end
+
+  def tag_service_pods_machines(logger, config)
+    logger.info 'Collecting services for the infrastructure...'
+    response = KubeAPI::request(config, 'services')
+    response['items'].each do |service|
+      next if service['spec']['selector'].nil?
+      logger.info "Collecting pods for service=#{service['metadata']['name']}..."
+      label_selector = ''
+      service['spec']['selector'].each {|k, v| label_selector << "#{k}=#{v},"}
+      label_selector = label_selector.to_s.chop  # Remove the last comma from the label selector
+      service_pods_response = KubeAPI::request(config, "pods?labelSelector=#{label_selector}")
+      service_pods_response['items'].each do |service_pod|
+        Pod.in(name: service_pod['metadata']['name']).each do |pod|
+          pod.machines.update(tags: ['type:container', "pod:#{service_pod['metadata']['name']}", "service:#{service_pod['metadata']['name']}"])
+        end
+      end
+    end
   end
 
   def collect_machine_disks(logger, config, machine)

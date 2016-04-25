@@ -18,6 +18,9 @@ begin
 
   # Collect the inventory
   InventoryCollector.new.collect(logger, config)
+
+  # Collect the metrics
+  MetricsCollector.new.collect(logger, config)
 rescue Exception => e
   logger.error e
   logger.error 'Kubernetes collector aborted'

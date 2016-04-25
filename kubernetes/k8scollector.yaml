@@ -1,4 +1,9 @@
 apiVersion: v1
+kind: Namespace         # Create this namespace just in case this collector is not in the same node as the On Premise API.
+metadata:               # If it already exists, k8s just shows the error but it won't harm the rest of the items on this file.
+  name: 6fusion-system
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: kube-secret
@@ -7,8 +12,8 @@ data:
   kube-host: "MTcyLjE3LjguMjAxCg=="
   kube-port: "ODA4MAo="
   kube-token: ""
+  kube-use-ssl: "MAo="     # Use 1 for true and 0 for false
   kube-verify-ssl: "MAo="  # Use 1 for true and 0 for false
-  cadvisor-host: "MTcyLjE3LjguMjAxCg=="
   cadvisor-port: "NDE5NAo="
 ---
 apiVersion: v1
@@ -17,13 +22,12 @@ metadata:
   name: on-premise-secret
   namespace: 6fusion-system
 data:
-  host: "MTEuMS4yLjkK"
+  host: "MTcyLjE3LjguMjAxCg=="
   port: "ODAK"
   token: ""
   use-ssl: "MAo="     # Use 1 for true and 0 for false
   verify-ssl: "MAo="  # Use 1 for true and 0 for false
-  organization-id: "MQo="
-  infrastructure-id: "MQo="
+  organization-id: "Nzc2MTYzLTgyNDljZWY4YjQxMzQyNGFhMTM4MTNkZWYyMjNjMTAxCg=="
 ---
 apiVersion: v1
 kind: Pod
@@ -35,7 +39,7 @@ metadata:
 spec:
   containers:
   - name: k8scollector
-    image: localhost:5000/k8scollector
+    image: 172.17.8.201:5000/k8scollector
     volumeMounts:
     - name: k8scollector-app
       mountPath: /usr/src/app
@@ -44,7 +48,7 @@ spec:
     - name: on-premise-secret
       mountPath: /var/run/secrets/k8scollector/on-premise
   - name: k8scollector-mongodb
-    #image: localhost:5000/k8scollector-mongodb
+    #image: 172.17.8.201:5000/k8scollector-mongodb
     image: mongo:3.2
     volumeMounts:
     - mountPath: /data/db

@@ -13,7 +13,11 @@ begin
   # Load configuration values
   config = K8scollector::load_configuration(logger)
 
-  puts config.inspect
+  # If we hit a 5 minute interval, submit the samples to the On Premise API
+  # TODO
+
+  # Collect the inventory
+  InventoryCollector.new.collect(logger, config)
 rescue Exception => e
   logger.error e
   logger.error 'Kubernetes collector aborted'

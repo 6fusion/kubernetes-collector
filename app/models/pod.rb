@@ -1,0 +1,10 @@
+class Pod
+  include Mongoid::Document
+
+  field :name, type: String
+
+  validates :name, presence: true
+
+  has_many   :machines
+  belongs_to :infrastructure
+end

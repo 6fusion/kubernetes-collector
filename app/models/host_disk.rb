@@ -8,4 +8,10 @@ class HostDisk
   validates :name, presence: true
 
   belongs_to :host
+
+  def to_payload
+    { name: self.name,
+      storage_bytes: self.storage_bytes,
+      speed_bits_per_second: self.speed_bits_per_second }
+  end
 end

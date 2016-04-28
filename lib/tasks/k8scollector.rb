@@ -14,7 +14,9 @@ begin
   config = K8scollector::load_configuration(logger)
 
   # If we hit a 5 minute interval, submit the samples to the On Premise API
-  # TODO
+  # Initialize On-Premise connector
+  
+  OnPremiseConnector.new(logger, config).sync if Time.now.utc.min % 5 == 0
 
   # Collect the inventory
   InventoryCollector.new.collect(logger, config)

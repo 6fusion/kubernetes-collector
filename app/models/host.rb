@@ -11,4 +11,11 @@ class Host
   has_many  :host_nics
   has_many  :host_disks
   belongs_to :infrastructure
+
+  def to_payload
+    { cpus: self.host_cpus.all.map {|cpu| cpu.to_payload},
+      memory_bytes: self.memory_bytes,
+      nics: self.host_nics.all.map {|nic| nic.to_payload},
+      disks: self.host_disks.all.map {|disk| disk.to_payload} }
+  end
 end

@@ -118,7 +118,6 @@ class OnPremiseConnector
       begin
         create_samples(machine)
       rescue StandardError => e
-        puts e
         raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
       end
     end

@@ -17,13 +17,20 @@ class Disk
   end
 
   def to_samples_payload(start_time, end_time)
-    usage_bytes = (self.disk_samples.where(reading_at: (start_time..end_time)).inject(0.0) { |sum, sample| sum + sample.usage_bytes } / self.disk_samples.count).to_i
-    read_kilobytes = (self.disk_samples.where(reading_at: (start_time..end_time)).inject(0.0) { |sum, sample| sum + sample.read_kilobytes } / self.disk_samples.count).to_i
-    write_kilobytes = (self.disk_samples.where(reading_at: (start_time..end_time)).inject(0.0) { |sum, sample| sum + sample.write_kilobytes } / self.disk_samples.count).to_i
+    disk_samples = self.disk_samples.where(reading_at: (start_time..end_time))
+    count = disk_samples.count
+
+    usage_bytes = obtain_average(disk_samples, :usage_bytes, count) 
+    read_kilobytes = obtain_average(disk_samples, :read_kilobytes, count) 
+    write_kilobytes = obtain_average(disk_samples, :write_kilobytes, count) 
 
     { id: self.remote_id,
       usage_bytes: usage_bytes, 
       read_bytes_per_second: read_kilobytes, 
       write_bytes_per_second: write_kilobytes }
+  end
+
+  def obtain_average(disk_samples, attribute, count)
+    count > 0 ? (disk_samples.inject(0.0) { |sum, sample| sum + sample.send(attribute) } / count).to_i : 0
   end
 end

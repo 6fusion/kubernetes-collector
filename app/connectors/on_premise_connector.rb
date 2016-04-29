@@ -8,6 +8,8 @@ class OnPremiseConnector
   end
 
   def sync
+    return if Infrastructure.count == 0
+
     reset_statistics
     obtain_last_samples
     obtain_records
@@ -17,12 +19,6 @@ class OnPremiseConnector
 
     @logger.info 'Syncing machines...'
     sync_machines
-
-    @logger.info 'Syncing disks...'
-    sync_disks
-
-    @logger.info 'Syncing nics...'
-    sync_nics
 
     @logger.info 'Submitting samples...'
     submit_samples
@@ -62,14 +58,10 @@ class OnPremiseConnector
     @start_time = @end_time - 5.minutes
 
     @machine_samples = MachineSample.where(reading_at: (@start_time..@end_time))
-    @nic_samples = NicSample.where(reading_at: (@start_time..@end_time))
-    @disk_samples = DiskSample.where(reading_at: (@start_time..@end_time))
   end
 
   def obtain_records
     @machines = @machine_samples.map{|sample| sample.machine}.uniq
-    @nics = @nic_samples.map{|sample| sample.nic}.uniq
-    @disks = @disk_samples.map{|sample| sample.disk}.uniq
   end
 
 
@@ -88,6 +80,8 @@ class OnPremiseConnector
     @machines.each do |machine|
       begin
         machine.remote_id ? update_machine(machine) : create_machine(machine)
+        sync_disks(machine)
+        sync_nics(machine)
       rescue StandardError => e
         raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
       end
@@ -95,8 +89,9 @@ class OnPremiseConnector
   end
 
   # Creates/Updates disks and synchronizes with the on-premise api
-  def sync_disks
-    @disks.each do |disk|
+  def sync_disks(machine)
+    @logger.info "Syncing disks for #{machine.name}..."
+    machine.disks.each do |disk|
       begin
         disk.remote_id ? update_disk(disk) : create_disk(disk)
       rescue StandardError => e
@@ -106,8 +101,9 @@ class OnPremiseConnector
   end
 
   # Creates/Updates nics and synchronizes with the on-premise api
-  def sync_nics
-    @nics.each do |nic|
+  def sync_nics(machine)
+    @logger.info "Syncing nics for #{machine.name}..."
+    machine.nics.each do |nic|
       begin
         nic.remote_id ? update_nic(nic) : create_nic(nic)
       rescue StandardError => e
@@ -122,6 +118,7 @@ class OnPremiseConnector
       begin
         create_samples(machine)
       rescue StandardError => e
+        puts e
         raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
       end
     end
@@ -195,7 +192,7 @@ class OnPremiseConnector
 
   def create_samples(machine)
     endpoint = "#{@api_endpoint}/machines/#{machine.remote_id}/samples" 
-    payload = machine.to_samples_payload(@start_time, @end_time, @disks, @nics)
+    payload = machine.to_samples_payload(@start_time, @end_time)
     OnPremiseApi::request_api(endpoint, @method[:post], @config, payload)
     @logger.info "Submitting samples for machine #{machine.name} completed successfully."
     @samples_submitted += 1

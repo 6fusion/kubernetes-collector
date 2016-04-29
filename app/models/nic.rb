@@ -17,13 +17,18 @@ class Nic
   end
 
   def to_samples_payload(start_time, end_time) 
-    receive_kilobits = (self.nic_samples.where(reading_at: (start_time..end_time)).inject(0.0) { |sum, sample| sum + sample.receive_kilobits } / self.nic_samples.count).to_i
-    transmit_kilobits = (self.nic_samples.where(reading_at: (start_time..end_time)).inject(0.0) { |sum, sample| sum + sample.transmit_kilobits } / self.nic_samples.count).to_i
+    nic_samples = self.nic_samples.where(reading_at: (start_time..end_time))
+    count = nic_samples.count
 
-    {
-      id: self.remote_id,
+    receive_kilobits = obtain_average(nic_samples, :receive_kilobits, count) 
+    transmit_kilobits = obtain_average(nic_samples, :transmit_kilobits, count) 
+
+    { id: self.remote_id,
       receive_bytes_per_second: receive_kilobits,
-      transmit_bytes_per_second: transmit_kilobits
-    }
+      transmit_bytes_per_second: transmit_kilobits }
+  end
+
+  def obtain_average(nic_samples, attribute, count)
+    count > 0 ? (nic_samples.inject(0.0) { |sum, sample| sum + sample.send(attribute) } / count).to_i : 0
   end
 end

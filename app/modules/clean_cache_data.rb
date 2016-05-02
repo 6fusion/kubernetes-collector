@@ -2,20 +2,20 @@ module CleanCacheData
 
   def remove_old_data(logger)
   	reset_statistics
-  	
+
   	current_time = Time.now.utc
     @end_time = current_time 
-    @start_time = current_time - DATA_ANTIQUITY_PERIOD
+    @start_time = current_time - DATA_AGE_PERIOD
 
-    logger.info "Removing old samples for the last period..."
+    logger.info 'Removing old samples for the last period...'
   	remove_old_samples
   	remove_structures_without_samples(logger)
   	statistics_report(logger)
-  	logger.info "Cleaning temporary data completed successfully."
+  	logger.info 'Cleaning temporary data completed successfully.'
   end
 
   def reset_statistics
-  	@deleted_samples = 0
+    @deleted_samples = 0
     @deleted_machines = 0
     @deleted_nics = 0
     @deleted_disks = 0
@@ -29,13 +29,13 @@ module CleanCacheData
   end
 
   def remove_structures_without_samples(logger)
-  	logger.info "Removing machines without samples for the last period..."
+  	logger.info 'Removing machines without samples for the last period...'
   	@deleted_machines = Machine.all.map { |machine| machine.destroy if machine.machine_samples.blank? }
   	
-  	logger.info "Removing nics without samples for the last period..."
+  	logger.info 'Removing nics without samples for the last period...'
   	@deleted_nics = Nic.all.map { |nic| nic.destroy if nic.nic_samples.blank? }
   	
-  	logger.info "Removing disks without samples for the last period..."
+  	logger.info 'Removing disks without samples for the last period...'
   	@deleted_disks = Disk.all.map { |disk| disk.destroy if disk.disk_samples.blank? }
   end
 

@@ -1,6 +1,8 @@
 module CleanCacheData
 
   def remove_old_data(logger)
+  	reset_statistics
+  	
   	current_time = Time.now.utc
     @end_time = current_time 
     @start_time = current_time - DATA_ANTIQUITY_PERIOD

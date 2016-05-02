@@ -22,6 +22,9 @@ begin
 
   # Collect the metrics
   MetricsCollector.new.collect(logger, config)
+
+  # Remove old samples and structures
+  CleanCacheData::remove_old_data(logger)
 rescue Exception => e
   logger.error e
   logger.error 'Kubernetes collector aborted'

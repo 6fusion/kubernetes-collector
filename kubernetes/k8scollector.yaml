@@ -27,7 +27,7 @@ data:
   token: ""
   use-ssl: "MAo="     # Use 1 for true and 0 for false
   verify-ssl: "MAo="  # Use 1 for true and 0 for false
-  organization-id: "Nzc2MTYzLTgyNDljZWY4YjQxMzQyNGFhMTM4MTNkZWYyMjNjMTAxCg=="
+  organization-id: "Nzc2MTYzLTUwNjI4YjhmNmExNTQzNzQ4ODdiZTQyN2QzMzg1YjgyCg=="
 ---
 apiVersion: v1
 kind: Pod

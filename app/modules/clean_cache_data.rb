@@ -4,14 +4,13 @@ module CleanCacheData
   	reset_statistics
 
   	current_time = Time.now.utc
-    @end_time = current_time 
-    @start_time = current_time - DATA_AGE_PERIOD
+    @age_time = current_time - DATA_AGE_PERIOD
 
-    logger.info 'Removing old samples for the last period...'
+    logger.info "Cleaning data older than #{@age_time} from the cache db..."
   	remove_old_samples
   	remove_structures_without_samples(logger)
   	statistics_report(logger)
-  	logger.info 'Cleaning temporary data completed successfully.'
+  	logger.info 'Cleaning old data completed successfully.'
   end
 
   def reset_statistics
@@ -22,21 +21,22 @@ module CleanCacheData
   end
 
   def remove_old_samples
-  	machine_sample_count = MachineSample.destroy_all(reading_at: (@start_time..@end_time))
-  	nic_sample_count = NicSample.destroy_all(reading_at: (@start_time..@end_time))
-  	disk_sample_count = DiskSample.destroy_all(reading_at: (@start_time..@end_time))
+  	machine_sample_count = MachineSample.destroy_all(:reading_at.lte => @age_time)
+  	nic_sample_count = NicSample.destroy_all(:reading_at.lte => @age_time)
+  	disk_sample_count = DiskSample.destroy_all(:reading_at.lte => @age_time)
   	@deleted_samples = machine_sample_count + nic_sample_count + disk_sample_count
   end
 
   def remove_structures_without_samples(logger)
-  	logger.info 'Removing machines without samples for the last period...'
-  	@deleted_machines = Machine.all.map { |machine| machine.destroy if machine.machine_samples.blank? }
-  	
-  	logger.info 'Removing nics without samples for the last period...'
-  	@deleted_nics = Nic.all.map { |nic| nic.destroy if nic.nic_samples.blank? }
-  	
-  	logger.info 'Removing disks without samples for the last period...'
-  	@deleted_disks = Disk.all.map { |disk| disk.destroy if disk.disk_samples.blank? }
+  	logger.info 'Removing machines (their disks and nics too) without samples for the last period...'
+  	Machine.all.each do |machine|
+      if machine.machine_samples.blank?
+        @deleted_disks += machine.disks.destroy_all
+        @deleted_nics += machine.nics.destroy_all
+        machine.destroy
+        @deleted_machines += 1
+      end
+    end
   end
 
   def statistics_report(logger)

@@ -23,7 +23,7 @@ begin
   # Collect the metrics
   MetricsCollector.new.collect(logger, config)
 
-  # Remove old samples and structures
+  # Remove old cache db data
   CleanCacheData::remove_old_data(logger)
 rescue Exception => e
   logger.error e

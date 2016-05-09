@@ -156,7 +156,7 @@ class OnPremiseConnector
   end
 
   def create_disk(disk)
-    endpoint = "#{@api_endpoint}/machines/#{disk.machine.remote_id}/disks" 
+    endpoint = "#{@api_endpoint}/machines/#{disk.machine.remote_id}/disks"
     payload = disk.to_payload
     response = OnPremiseApi::request_api(endpoint, @method[:post], @config, payload)
     update_remote_id(disk, response)
@@ -173,11 +173,11 @@ class OnPremiseConnector
   end
 
   def create_nic(nic)
-    endpoint = "#{@api_endpoint}/machines/#{nic.machine.remote_id}/nics" 
+    endpoint = "#{@api_endpoint}/machines/#{nic.machine.remote_id}/nics"
     payload = nic.to_payload
     response = OnPremiseApi::request_api(endpoint, @method[:post], @config, payload)
     update_remote_id(nic, response)
-    @logger.info "Creating nic #{nic.name} completed successfully." 
+    @logger.info "Creating nic #{nic.name} completed successfully."
     @created_nics += 1
   end
 
@@ -190,7 +190,7 @@ class OnPremiseConnector
   end
 
   def create_samples(machine)
-    endpoint = "#{@api_endpoint}/machines/#{machine.remote_id}/samples" 
+    endpoint = "#{@api_endpoint}/machines/#{machine.remote_id}/samples"
     payload = machine.to_samples_payload(@start_time, @end_time)
     OnPremiseApi::request_api(endpoint, @method[:post], @config, payload)
     @logger.info "Submitting samples for machine #{machine.name} completed successfully."
@@ -200,5 +200,5 @@ class OnPremiseConnector
   def update_remote_id(structure, response)
     parameters = { remote_id: response["id"] }
     structure.update(parameters)
-  end 
+  end
 end

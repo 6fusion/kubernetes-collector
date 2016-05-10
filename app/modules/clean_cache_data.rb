@@ -1,6 +1,6 @@
 module CleanCacheData
 
-  def remove_old_data(logger)
+  def remove_old_data(logger, config)
   	reset_statistics
 
   	current_time = Time.now.utc
@@ -8,7 +8,7 @@ module CleanCacheData
 
     logger.info "Cleaning data older than #{@age_time} from the cache db..."
   	remove_old_samples
-  	remove_structures_without_samples(logger)
+  	remove_structures_without_samples(logger, config)
   	statistics_report(logger)
   	logger.info 'Cleaning old data completed successfully.'
   end
@@ -27,12 +27,20 @@ module CleanCacheData
   	@deleted_samples = machine_sample_count + nic_sample_count + disk_sample_count
   end
 
-  def remove_structures_without_samples(logger)
+  def remove_structures_without_samples(logger, config)
   	logger.info 'Removing machines (their disks and nics too) without samples for the last period...'
   	Machine.all.each do |machine|
       if machine.machine_samples.blank?
         @deleted_disks += machine.disks.destroy_all
         @deleted_nics += machine.nics.destroy_all
+        # Before destroying the machine, update its status to poweredOff on the on premise API if it exists there
+        if machine.remote_id
+          machine.status = 'poweredOff'
+          endpoint = "machines/#{machine.remote_id}"
+          payload = machine.to_payload
+          OnPremiseApi::request_api(endpoint, :put, config, payload)
+        end
+        # Destroy the machine
         machine.destroy
         @deleted_machines += 1
       end

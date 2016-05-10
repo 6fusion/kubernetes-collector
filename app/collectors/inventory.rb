@@ -83,7 +83,7 @@ class InventoryCollector
         rescue Mongoid::Errors::DocumentNotFound
           machine = Machine.new(virtual_name: container_id, name: "#{CONTAINER_NAME_PREFIX}#{container_id[0...8]}")  # The container name might be updated later if this container is attached to a pod
         end
-        machine.status = 'running'  # Containers retrieved through cAdvisor are running by default
+        machine.status = 'poweredOn'  # Containers retrieved through cAdvisor are running by default
         machine.tags = ['type:container']
         host_attributes = CAdvisorAPI::request(config, host.ip_address, 'attributes')
         machine.cpu_count = host_attributes['num_cores']
@@ -128,7 +128,7 @@ class InventoryCollector
             next
           end
           machine.name = "#{container['name']}-#{container_id[0...8]}"
-          machine.status = container['state'].keys.first
+          machine.status = 'poweredOn'
           machine.tags = machine.tags + ["pod:#{pod['metadata']['name']}"]
           machine.pod = pod['db_object']
           machine.save!

@@ -30,7 +30,7 @@ class K8scollectorConfig
     @kube[:host] = kube_host
     @kube[:url] = "#{kube_protocol}://#{kube_host}:#{kube_port}/api/#{KUBE_API_VERSION}"
     @kube[:token] = kube_token
-    @kube[:headers] = {Authorization: "Bearer #{kube_token}"} if kube_use_ssl && kube_token.empty?
+    @kube[:headers] = {Authorization: "Bearer #{kube_token}"} if kube_use_ssl && !kube_token.to_s.empty?
     @kube[:verify_ssl] = !!(File.exist?("#{SECRETS_DIR}/kube/kube-verify-ssl") ? (File.read("#{SECRETS_DIR}/kube/kube-verify-ssl").chomp.strip).to_i.nonzero? : nil)
 
     # Kubernetes cAdvisor values

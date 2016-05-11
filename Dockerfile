@@ -3,44 +3,33 @@ MAINTAINER 6fusion dev <dev@6fusion.com>
 
 ENV BUILD_PACKAGES build-base curl-dev libffi-dev gcc git zlib-dev
 ENV RUBY_PACKAGES ruby ruby-bundler ruby-dev ruby-io-console ruby-nokogiri
-ENV DEV_PACKAGES bash vim sudo
-ENV RUNTIME_PACKAGES ca-certificates
+ENV RUNTIME_PACKAGES ca-certificates bash
 
-ENV RACK_ENV development
+ENV RACK_ENV production
 
-ENV UID 1000
-ENV GID 1000
-ENV USERNAME k8scollector
-ENV GROUP k8scollector
+ENV APPDIR /usr/src/app
 
 RUN \
 # Update and install all of the required packages.
   apk update && \
   apk upgrade && \
-  apk add $BUILD_PACKAGES $RUBY_PACKAGES $DEV_PACKAGES $RUNTIME_PACKAGES && \
-# Create the k8scollector user to map it to the host machine user
-  addgroup -g $GID $GROUP && \
-  adduser -g "K8s Collector" -h /home/$USERNAME -s /bin/ash -G $GROUP -u $UID -D $USERNAME && \
-# Give the k8scollector user sudo privileges
-  echo "%$GROUP ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$GROUP && \
+  apk add $BUILD_PACKAGES $RUBY_PACKAGES $RUNTIME_PACKAGES && \
 # Create the folder to hold the application
-  mkdir -p /usr/src/app && \
-# Create the temporary command to keep the container alive
-  touch /entrypoint.log && \
+  mkdir -p $APPDIR && \
 # Clean up
   rm -rf /var/cache/apk/*
 
-WORKDIR  /usr/src/app
-COPY Gemfile* /usr/src/app/
+WORKDIR  $APPDIR
+COPY . $APPDIR
 
-USER k8scollector
 RUN \
 # Install the gems required by the application
-  bundle install
+  bundle install && \
+# Remove unnecessary files/folders
+  rm -rf .git .gitignore
 
-USER root
-RUN \
-# Remove the temporary Gemfiles
-  rm Gemfile*
+# Add the entrypoint script
+ADD docker/apps/k8scollector/k8scollector-entrypoint.sh /
+RUN chmod +x /k8scollector-entrypoint.sh
 
-CMD ["tail", "-f", "/entrypoint.log"]
+ENTRYPOINT ["/k8scollector-entrypoint.sh"]

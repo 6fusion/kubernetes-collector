@@ -25,6 +25,8 @@ begin
 
   # Remove old cache db data
   CleanCacheData::remove_old_data(logger, config)
+
+  logger.info 'Kubernetes collector finished successfully...'
 rescue Exception => e
   logger.error e
   logger.error 'Kubernetes collector aborted'

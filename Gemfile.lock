@@ -10,9 +10,8 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
-    bson (4.1.0)
+    bson (4.1.1)
     builder (3.2.2)
-    chronic (0.10.2)
     domain_name (0.5.20160310)
       unf (>= 0.0.5, < 1.0.0)
     http-cookie (1.0.2)
@@ -21,7 +20,7 @@ GEM
     json (1.8.3)
     mime-types (2.99.1)
     minitest (5.8.4)
-    mongo (2.2.4)
+    mongo (2.2.5)
       bson (~> 4.0)
     mongoid (5.1.2)
       activemodel (~> 4.0)
@@ -40,8 +39,6 @@ GEM
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.7.2)
-    whenever (0.9.4)
-      chronic (>= 0.6.3)
 
 PLATFORMS
   ruby
@@ -49,7 +46,6 @@ PLATFORMS
 DEPENDENCIES
   mongoid (= 5.1.2)
   rest-client (= 1.8)
-  whenever
 
 BUNDLED WITH
    1.10.5

@@ -4,17 +4,23 @@ metadata:               # If it already exists, k8s just shows the error but it 
   name: 6fusion-system
 ---
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: 6fusion-k8scollector
+  namespace: 6fusion-system
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: kube-secret
   namespace: 6fusion-system
 data:
-  kube-host: "MTcyLjE3LjguMjAxCg=="
-  kube-port: "ODA4MAo="
-  kube-token: ""
-  kube-use-ssl: "MAo="     # Use 1 for true and 0 for false
-  kube-verify-ssl: "MAo="  # Use 1 for true and 0 for false
-  cadvisor-port: "NDE5NAo="
+  kube-host: "MTcyLjE3LjguMjAxCg=="  # IP address or domain of the kubernetes API server
+  kube-port: "ODA4MAo="              # Port of the kubernetes API server
+  kube-token: ""                     # Token of the kubernetes API server (specify only for remote clusters)
+  kube-use-ssl: "MAo="               # Use 1 for true and 0 for false
+  kube-verify-ssl: "MAo="            # Use 1 for true and 0 for false
+  cadvisor-port: "NDE5NAo="          # cAdvisor port (usually 4194)
 ---
 apiVersion: v1
 kind: Secret
@@ -22,12 +28,12 @@ metadata:
   name: on-premise-secret
   namespace: 6fusion-system
 data:
-  host: "MTcyLjE3LjguMjAxCg=="
-  port: "ODAK"
-  token: ""
-  use-ssl: "MAo="     # Use 1 for true and 0 for false
-  verify-ssl: "MAo="  # Use 1 for true and 0 for false
-  organization-id: "Nzc2MTYzLTU1ODQ0NDUyYzg0MjQzMTdhMjBhNzA3N2ZkYTIyNTg4Cg=="
+  host: "MTcyLjE3LjguMjAxCg=="  # IP address or domain of the 6fusion On Premise API server
+  port: "ODAK"                  # Port of the 6fusion On Premise API server
+  token: ""                     # Token to access the 6fusion On Premise API server
+  use-ssl: "MAo="               # Use 1 for true and 0 for false
+  verify-ssl: "MAo="            # Use 1 for true and 0 for false
+  organization-id: "Nzc2MTYzLTU1ODQ0NDUyYzg0MjQzMTdhMjBhNzA3N2ZkYTIyNTg4Cg=="  # Organization ID of the one already created in the 6fusion On Premise API server
 ---
 apiVersion: v1
 kind: Pod
@@ -39,24 +45,18 @@ metadata:
 spec:
   containers:
   - name: k8scollector
-    image: 172.17.8.201:5000/k8scollector
+    image: 172.17.8.201:5000/k8scollector  # Docker image of the 6fusion Kubernetes Collector
     volumeMounts:
-    - name: k8scollector-app
-      mountPath: /usr/src/app
     - name: kube-secret
       mountPath: /var/run/secrets/k8scollector/kube
     - name: on-premise-secret
       mountPath: /var/run/secrets/k8scollector/on-premise
   - name: k8scollector-mongodb
-    #image: 172.17.8.201:5000/k8scollector-mongodb
     image: mongo:3.2
     volumeMounts:
     - mountPath: /data/db
       name: "k8scollector-mongodb"
   volumes:
-  - name: k8scollector-app
-    hostPath:
-      path: "/home/k8scollector"
   - name: on-premise-secret
     secret:
       secretName: on-premise-secret

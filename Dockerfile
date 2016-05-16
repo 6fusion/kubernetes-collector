@@ -1,3 +1,4 @@
+# This image should be named: k8scollector (referenced in the kubernetes yaml file)
 FROM alpine:3.2
 MAINTAINER 6fusion dev <dev@6fusion.com>
 
@@ -30,6 +31,7 @@ RUN \
 
 # Add the entrypoint script
 ADD docker/apps/k8scollector/k8scollector-entrypoint.sh /
-RUN chmod +x /k8scollector-entrypoint.sh
+# Give execution permissions to all scripts
+RUN chmod +x /k8scollector-entrypoint.sh $APPDIR/k8scollector.sh $APPDIR/k8scollectorctl
 
 ENTRYPOINT ["/k8scollector-entrypoint.sh"]

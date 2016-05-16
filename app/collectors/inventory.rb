@@ -92,7 +92,10 @@ class InventoryCollector
         machine.remote_id = get_machine_remote_id(machine, on_prem_machines)
         machine.save!
 
-        collect_machine_disks(logger, config, machine)
+        disk_map = host_attributes['disk_map']
+        storage_bytes = collect_disk_storage_bytes(disk_map)
+
+        collect_machine_disks(logger, config, machine, storage_bytes)
         collect_machine_nics(logger, config, machine)
       end
     end
@@ -155,7 +158,7 @@ class InventoryCollector
     end
   end
 
-  def collect_machine_disks(logger, config, machine)
+  def collect_machine_disks(logger, config, machine, storage_bytes)
     logger.info "Collecting disks for machine=#{machine.name}..."
     # NOTE: should storage_bytes be the node disk size?
     disk_name = "disk-#{machine.virtual_name[0...8]}"
@@ -163,7 +166,7 @@ class InventoryCollector
     begin
       disk = machine.disks.find_by(name: disk_name)
     rescue Mongoid::Errors::DocumentNotFound
-      disk = machine.disks.new(name: disk_name, storage_bytes: 0)
+      disk = machine.disks.new(name: disk_name, storage_bytes: storage_bytes)
     end
     disk.remote_id = get_disk_remote_id(config, machine, disk_name)
     disk.machine = machine
@@ -182,6 +185,15 @@ class InventoryCollector
     nic.remote_id = get_nic_remote_id(config, machine, nic_name)
     nic.machine = machine
     nic.save!
+  end
+
+  def collect_disk_storage_bytes(disk_map)
+    storage_bytes = 0
+    disk_map.values.each do |v|
+      storage_bytes += v['size']
+    end
+
+    storage_bytes
   end
 
   def collect_on_prem_machines(config, infrastructure)

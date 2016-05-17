@@ -160,7 +160,6 @@ class InventoryCollector
 
   def collect_machine_disks(logger, config, machine, storage_bytes)
     logger.info "Collecting disks for machine=#{machine.name}..."
-    # NOTE: should storage_bytes be the node disk size?
     disk_name = "disk-#{machine.virtual_name[0...8]}"
     # Is this a new or an existing disk?
     begin

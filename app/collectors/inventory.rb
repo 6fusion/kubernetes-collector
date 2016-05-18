@@ -76,7 +76,7 @@ class InventoryCollector
           machine = Machine.new(virtual_name: container_id, name: "#{CONTAINER_NAME_PREFIX}#{container_id[0...8]}")  # The container name might be updated later if this container is attached to a pod
         end
         machine.status = 'poweredOn'  # Containers retrieved through cAdvisor are running by default
-        machine.tags = ['type:container']
+        machine.tags = ['type:container', 'platform:kubernetes']
         host_attributes = CAdvisorAPI::request(config, host.ip_address, 'attributes')
         machine.cpu_count = host_attributes['num_cores']
         machine.cpu_speed_hz = host_attributes['cpu_frequency_khz'] * 1000
@@ -144,7 +144,7 @@ class InventoryCollector
       service_pods_response = KubeAPI::request(config, "pods?labelSelector=#{label_selector}")
       service_pods_response['items'].each do |service_pod|
         Pod.in(name: service_pod['metadata']['name']).each do |pod|
-          pod.machines.update(tags: ['type:container', "pod:#{service_pod['metadata']['name']}", "service:#{service_pod['metadata']['name']}"])
+          pod.machines.update(tags: ['type:container', 'platform:kubernetes', "pod:#{service_pod['metadata']['name']}", "service:#{service_pod['metadata']['name']}"])
         end
       end
     end

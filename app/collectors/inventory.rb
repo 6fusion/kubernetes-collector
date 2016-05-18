@@ -18,12 +18,8 @@ class InventoryCollector
   end
 
   def verify_organization(logger, config)
-    begin
-      # Verify that the Organization exists in the On Premise API. Otherwise, raise an exception.
-      response = OnPremiseApi::request_api("organizations/#{config.on_premise[:organization_id]}", :get, config)
-    rescue Exception => e
-      raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
-    end
+    # Verify that the Organization exists in the On Premise API. Otherwise, raise an exception.
+    response = OnPremiseApi::request_api("organizations/#{config.on_premise[:organization_id]}", :get, config)
   end
 
   def collect_infrastructure(logger, config)
@@ -56,15 +52,11 @@ class InventoryCollector
       node_attributes['network_devices'].each {|nd| host.host_nics.create(name: nd['name'])}
     end
     # Look for the remote_id of the infrastructure (if it exists on the on-prem db)
-    begin
-      OnPremiseApi::request_api('infrastructures', :get, config, {organization_id: infrastructure.organization_id})['embedded']['infrastructures'].each do |i|
-        if infrastructure.name.eql? i['name']
-          infrastructure.remote_id = i['id']
-          break
-        end
+    OnPremiseApi::request_api('infrastructures', :get, config, {organization_id: infrastructure.organization_id})['embedded']['infrastructures'].each do |i|
+      if infrastructure.name.eql? i['name']
+        infrastructure.remote_id = i['id']
+        break
       end
-    rescue Exception => e
-      raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
     end
     infrastructure.save!
     infrastructure.reload
@@ -196,15 +188,11 @@ class InventoryCollector
   end
 
   def collect_on_prem_machines(config, infrastructure)
-    begin
-      infrastructure.remote_id ?
-        OnPremiseApi::request_api('machines', :get, config, {organization_id: config.on_premise[:organization_id],
-                                                             infrastructure_id: infrastructure.remote_id})['embedded']['machines']
-        :
-        []
-    rescue Exception => e
-      raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
-    end
+    infrastructure.remote_id ?
+      OnPremiseApi::request_api('machines', :get, config, {organization_id: config.on_premise[:organization_id],
+                                                           infrastructure_id: infrastructure.remote_id})['embedded']['machines']
+      :
+      []
   end
 
   def get_machine_remote_id(machine, on_prem_machines)
@@ -220,14 +208,10 @@ class InventoryCollector
 
   def get_disk_remote_id(config, machine, disk_name)
     remote_id = nil
-    begin
-      machine_disks = machine.remote_id ?
-                      OnPremiseApi::request_api('disks', :get, config)['embedded']['disks']
-                      :
-                      []
-    rescue Exception => e
-      raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
-    end
+    machine_disks = machine.remote_id ?
+                    OnPremiseApi::request_api('disks', :get, config)['embedded']['disks']
+                    :
+                    []
     machine_disks.each do |md|
       if disk_name.eql? md['name']
         remote_id = md['id']
@@ -239,14 +223,10 @@ class InventoryCollector
 
   def get_nic_remote_id(config, machine, nic_name)
     remote_id = nil
-    begin
-      machine_nics = machine.remote_id ?
-                     OnPremiseApi::request_api('nics', :get, config)['embedded']['nics']
-                     :
-                     []
-    rescue Exception => e
-      raise Exception.new(e.response ? JSON.parse(e.response)['message'] : e)
-    end
+    machine_nics = machine.remote_id ?
+                   OnPremiseApi::request_api('nics', :get, config)['embedded']['nics']
+                   :
+                   []
     machine_nics.each do |mn|
       if nic_name.eql? mn['name']
         remote_id = mn['id']

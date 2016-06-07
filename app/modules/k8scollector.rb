@@ -1,3 +1,4 @@
+# This class is responsible for initializing the collector values required to carry out the whole process
 module K8scollector
 
   def init_logger

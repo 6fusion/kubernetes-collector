@@ -1,3 +1,4 @@
+# This class defines the MongoDB structure of an infrastructure host
 class Host
   include Mongoid::Document
 

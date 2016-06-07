@@ -1,3 +1,4 @@
+# This class defines the MongoDB structure of an infrastructure host cpu
 class HostCpu
   include Mongoid::Document
 

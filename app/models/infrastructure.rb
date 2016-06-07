@@ -1,3 +1,4 @@
+# This class defines the MongoDB structure of the infrastructure
 class Infrastructure
   include Mongoid::Document
 

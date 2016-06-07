@@ -1,3 +1,4 @@
+# This class defines the MongoDB structure of a machine (container)
 class Machine
   include Mongoid::Document
 
@@ -11,7 +12,7 @@ class Machine
   field :status,       type: String
 
   validates :name, :virtual_name, :status, :tags, presence: true
-  validates :cpu_count,    
+  validates :cpu_count,
             :cpu_speed_hz,
             :memory_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
@@ -47,7 +48,7 @@ class Machine
     cpu_usage_percent = obtain_average(machine_samples, :cpu_usage_percent, count)
     memory_bytes = obtain_average(machine_samples, :memory_bytes, count).to_i
 
-    { cpu_usage_percent: cpu_usage_percent, 
+    { cpu_usage_percent: cpu_usage_percent,
       memory_bytes: memory_bytes }
   end
 

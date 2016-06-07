@@ -1,3 +1,4 @@
+# This class is responsible for making the requests to the Kubernetes API
 module KubeAPI
 
   def self.request(config, endpoint, method=:get)

@@ -1,3 +1,4 @@
+# This class is responsible for making the requests to the 6fusion meter On Premise API
 module OnPremiseApi
 
   def request_api(endpoint, method, config, parameters=nil)

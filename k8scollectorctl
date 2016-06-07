@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Please run this script from the root folder of the project
+# This is the kubernetes collector installer/uninstaller for a vagrant development environment
+
+# Note: please run this script from the root folder of the project
 
 show_usage()
 {

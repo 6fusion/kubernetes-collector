@@ -1,3 +1,4 @@
+# This class is responsible for making the requests to the cAdvisor API
 module CAdvisorAPI
 
   def self.request(config, host, endpoint)

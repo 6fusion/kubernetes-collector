@@ -1,3 +1,4 @@
+# This class defines the MongoDB structure of a machine network interface
 class Nic
   include Mongoid::Document
 
@@ -16,12 +17,12 @@ class Nic
       kind: self.kind }
   end
 
-  def to_samples_payload(start_time, end_time) 
+  def to_samples_payload(start_time, end_time)
     nic_samples = self.nic_samples.where(reading_at: (start_time..end_time))
     count = nic_samples.count
 
-    receive_kilobits = obtain_average(nic_samples, :receive_kilobits, count) 
-    transmit_kilobits = obtain_average(nic_samples, :transmit_kilobits, count) 
+    receive_kilobits = obtain_average(nic_samples, :receive_kilobits, count)
+    transmit_kilobits = obtain_average(nic_samples, :transmit_kilobits, count)
 
     { id: self.remote_id,
       receive_bytes_per_second: receive_kilobits,

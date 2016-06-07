@@ -1,3 +1,4 @@
+# This class defines the MongoDB structure of a cluster pod
 class Pod
   include Mongoid::Document
 

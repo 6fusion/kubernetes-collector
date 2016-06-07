@@ -52,7 +52,7 @@ class InventoryCollector
         node_attributes['filesystems'].each {|fs| host.host_disks.create(name: fs['device'].split('/').last, storage_bytes: fs['capacity'])}
         node_attributes['network_devices'].each {|nd| host.host_nics.create(name: nd['name'])}
       rescue Exception
-        logger.warn "Could not collect attributes of host #{node_ip}. Skipping..."
+        logger.warn "Could not collect attributes from host #{node_ip}. CAdvisor is not enabled. Skipping..."
       end
     end
     # Look for the remote_id of the infrastructure (if it exists on the on-prem db)

@@ -10,11 +10,12 @@ metadata:
   name: kube-secret
   namespace: 6fusion-system
 data:
-  kube-host: "MTcyLjE3LjguMjAxCg=="  # IP address or domain of the kubernetes API server
-  kube-port: "ODA4MAo="              # Port of the kubernetes API server
+  kube-host: "MTAuMy4wLjEK"  # IP address or domain of the kubernetes API server
+  kube-port: "NDQzCg=="              # Port of the kubernetes API server
   kube-token: ""                     # Token of the kubernetes API server (specify only for remote clusters)
-  kube-use-ssl: "MAo="               # Use 1 for true and 0 for false
+  kube-use-ssl: "MQo="               # Use 1 for true and 0 for false
   kube-verify-ssl: "MAo="            # Use 1 for true and 0 for false
+  cadvisor-host: "MTAuMC4wLjE4Ngo="
   cadvisor-port: "NDE5NAo="          # cAdvisor port (usually 4194)
 ---
 apiVersion: v1
@@ -23,12 +24,12 @@ metadata:
   name: on-premise-secret
   namespace: 6fusion-system
 data:
-  host: "MTcyLjE3LjguMjAxCg=="  # IP address or domain of the 6fusion On Premise API server
+  host: "YTA2ZDFiY2E2MjgyNDExZTZhNDRhMTI0ZDhlMmY0ZjgtNDQ4NTM0NDM5LnVzLWVhc3QtMS5lbGIuYW1hem9uYXdzLmNvbQo="  # IP address or domain of the 6fusion On Premise API server
   port: "ODAK"                  # Port of the 6fusion On Premise API server
   token: ""                     # Token to access the 6fusion On Premise API server
   use-ssl: "MAo="               # Use 1 for true and 0 for false
   verify-ssl: "MAo="            # Use 1 for true and 0 for false
-  organization-id: "Nzc2MTYzLTU1ODQ0NDUyYzg0MjQzMTdhMjBhNzA3N2ZkYTIyNTg4Cg=="  # Organization ID of the one already created in the 6fusion On Premise API server
+  organization-id: "Nzc2MTYzLWI3NTkzNDRiN2FiYTQyMjQ5ZmQyZGQ0YWVjMDc1NTljCg=="  # Organization ID of the one already created in the 6fusion On Premise API server
 ---
 apiVersion: v1
 kind: Pod
@@ -40,7 +41,7 @@ metadata:
 spec:
   containers:
   - name: k8scollector
-    image: 172.17.8.201:5000/k8scollector  # Docker image of the 6fusion Kubernetes Collector
+    image: 6fusion/kubernetes-collector:0.1.3  # Docker image of the 6fusion Kubernetes Collector
     volumeMounts:
     - name: kube-secret
       mountPath: /var/run/secrets/k8scollector/kube

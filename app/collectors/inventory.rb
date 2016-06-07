@@ -24,7 +24,7 @@ class InventoryCollector
 
   def collect_infrastructure(logger, config)
     logger.info 'Collecting infrastructure info...'
-    attributes = CAdvisorAPI::request(config, config.kube[:host], 'attributes')
+    attributes = CAdvisorAPI::request(config, config.kube[:cadvisor_host], 'attributes')
     infrastructure_name = "#{attributes['system_uuid'][0..7]}_#{attributes['machine_id'][0..8]}"
     # Does the infrastructure exist?
     begin
@@ -45,11 +45,15 @@ class InventoryCollector
     nodes_response = KubeAPI::request(config, 'nodes')
     nodes_response['items'].each do |node|
       node_ip = node['status']['addresses'][0]['address']
-      node_attributes = CAdvisorAPI::request(config, node_ip, 'attributes')
-      host = infrastructure.hosts.create(ip_address: node_ip, memory_bytes: node_attributes['memory_capacity'], infrastructure: infrastructure)
-      host.host_cpus.create(cores: node_attributes['num_cores'], speed_hz: node_attributes['cpu_frequency_khz'] * 1000)
-      node_attributes['filesystems'].each {|fs| host.host_disks.create(name: fs['device'].split('/').last, storage_bytes: fs['capacity'])}
-      node_attributes['network_devices'].each {|nd| host.host_nics.create(name: nd['name'])}
+      begin
+        node_attributes = CAdvisorAPI::request(config, node_ip, 'attributes')
+        host = infrastructure.hosts.create(ip_address: node_ip, memory_bytes: node_attributes['memory_capacity'], infrastructure: infrastructure)
+        host.host_cpus.create(cores: node_attributes['num_cores'], speed_hz: node_attributes['cpu_frequency_khz'] * 1000)
+        node_attributes['filesystems'].each {|fs| host.host_disks.create(name: fs['device'].split('/').last, storage_bytes: fs['capacity'])}
+        node_attributes['network_devices'].each {|nd| host.host_nics.create(name: nd['name'])}
+      rescue Exception
+        logger.warn "Could not collect attributes of host #{node_ip}. Skipping..."
+      end
     end
     # Look for the remote_id of the infrastructure (if it exists on the on-prem db)
     OnPremiseApi::request_api('infrastructures', :get, config, {organization_id: infrastructure.organization_id})['embedded']['infrastructures'].each do |i|

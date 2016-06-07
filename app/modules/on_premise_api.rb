@@ -10,7 +10,7 @@ module OnPremiseApi
     	end
     	JSON.parse(response.body)
     rescue Exception => e
-      Logger.new(STDOUT).error 'Operational error with the 6fusion meter API. See error details below:'
+      Logger.new(STDOUT).error "Operational error with the 6fusion meter API at #{config.on_premise[:url]}. See error details below:"
       raise Exception.new(e.message)
     end
   end

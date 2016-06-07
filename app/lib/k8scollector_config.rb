@@ -8,6 +8,7 @@ class K8scollectorConfig
       token:             "",
       headers:           {},
       verify_ssl:        true,
+      cadvisor_host:     "",
       cadvisor_port:     "",
       cadvisor_protocol: "http"  # As of today, cAdvisor only serves on http
     }
@@ -34,6 +35,10 @@ class K8scollectorConfig
     @kube[:verify_ssl] = !!(File.exist?("#{SECRETS_DIR}/kube/kube-verify-ssl") ? (File.read("#{SECRETS_DIR}/kube/kube-verify-ssl").chomp.strip).to_i.nonzero? : nil)
 
     # Kubernetes cAdvisor values
+    cadvisor_host = File.exist?("#{SECRETS_DIR}/kube/cadvisor-host") ? File.read("#{SECRETS_DIR}/kube/cadvisor-host").chomp.strip : ""
+    raise "cAdvisor host is not present in the kube-secret" if cadvisor_host.empty?
+    @kube[:cadvisor_host] = cadvisor_host
+    
     cadvisor_port = File.exist?("#{SECRETS_DIR}/kube/cadvisor-port") ? File.read("#{SECRETS_DIR}/kube/cadvisor-port").chomp.strip : ""
     raise "cAdvisor port is not present in the kube-secret" if cadvisor_port.empty?
     @kube[:cadvisor_port] = cadvisor_port

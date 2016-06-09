@@ -1,14 +1,17 @@
+# This class is responsible for collecting metrics for all containers in the cluster
 class MetricsCollector
 
-  def initialize
+  def initialize(logger, config)
+    @logger = logger
+    @config = config
   end
 
-  def collect(logger, config)
-    logger.info 'Collecting metrics for the infrastructure...'
+  def collect
+    @logger.info 'Collecting metrics for the infrastructure...'
     metrics = {}
     Infrastructure.first.hosts.each do |host|
-      logger.info "Collecting metrics for host #{host.ip_address}..."
-      metrics_response = CAdvisorAPI::request(config, host.ip_address, "stats/?type=docker&recursive=true&count=#{CADVISOR_SAMPLES_COUNT}")
+      @logger.info "Collecting metrics for host #{host.ip_address}..."
+      metrics_response = CAdvisorAPI::request(@config, host.ip_address, "stats/?type=docker&recursive=true&count=#{CADVISOR_SAMPLES_COUNT}")
       metrics.merge!(metrics_response)
     end
 
@@ -16,7 +19,7 @@ class MetricsCollector
     metrics.keys.each {|k| metrics[k.split('/').last.split('docker-').last.split('.scope').first] = metrics.delete(k)}
 
     Machine.all.each do |machine|
-      logger.info("Collecting metrics for #{machine.name} container...")
+      @logger.info("Collecting metrics for #{machine.name} container...")
       previous_sample = nil
       samples = metrics["#{machine.virtual_name}"]
       samples.each do |sample|
@@ -69,7 +72,7 @@ class MetricsCollector
           previous_sample['network_bytes_transmit'] = sample['network']['interfaces'][0]['tx_bytes']
         end unless sample['network'].empty?
       end if samples
-      logger.info("Collected metrics for #{machine.name} successfully.")
+      @logger.info("Collected metrics for #{machine.name} successfully.")
     end
   end
 

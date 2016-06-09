@@ -1,3 +1,4 @@
+# This class is responsible for cleaning data from the MongoDB cache older than the value set by DATA_AGE_PERIOD
 module CleanCacheData
 
   def remove_old_data(logger, config)

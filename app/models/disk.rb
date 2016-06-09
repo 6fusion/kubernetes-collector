@@ -1,3 +1,4 @@
+# This class defines the MongoDB structure of a machine disk
 class Disk
   include Mongoid::Document
 
@@ -20,13 +21,13 @@ class Disk
     disk_samples = self.disk_samples.where(reading_at: (start_time..end_time))
     count = disk_samples.count
 
-    usage_bytes = obtain_average(disk_samples, :usage_bytes, count) 
-    read_kilobytes = obtain_average(disk_samples, :read_kilobytes, count) 
-    write_kilobytes = obtain_average(disk_samples, :write_kilobytes, count) 
+    usage_bytes = obtain_average(disk_samples, :usage_bytes, count)
+    read_kilobytes = obtain_average(disk_samples, :read_kilobytes, count)
+    write_kilobytes = obtain_average(disk_samples, :write_kilobytes, count)
 
     { id: self.remote_id,
-      usage_bytes: usage_bytes, 
-      read_bytes_per_second: read_kilobytes, 
+      usage_bytes: usage_bytes,
+      read_bytes_per_second: read_kilobytes,
       write_bytes_per_second: write_kilobytes }
   end
 

@@ -18,10 +18,10 @@ begin
   OnPremiseConnector.new(logger, config).sync if Time.now.utc.min % 5 == 0
 
   # Collect the inventory
-  InventoryCollector.new.collect(logger, config)
+  InventoryCollector.new(logger, config).collect
 
   # Collect the metrics
-  MetricsCollector.new.collect(logger, config)
+  MetricsCollector.new(logger, config).collect
 
   # Remove old cache db data
   CleanCacheData::remove_old_data(logger, config)

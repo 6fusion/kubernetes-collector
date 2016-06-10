@@ -1,5 +1,4 @@
 RSpec.describe Host do
-  
   describe 'fields' do
     it { is_expected.to have_fields(:ip_address, :memory_bytes) }
   end

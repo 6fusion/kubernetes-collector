@@ -1,6 +1,6 @@
-# This class is responsible for initializing the collector values required to carry out the whole process
+# This class is responsible for initializing the collector values required
+# to carry out the whole process
 module K8scollector
-
   def init_logger
     logger = Logger.new(STDOUT)
     logger.level = Logger::DEBUG
@@ -16,5 +16,4 @@ module K8scollector
     logger.info 'Loading collector configuration values...'
     K8scollectorConfig.new
   end
-
 end

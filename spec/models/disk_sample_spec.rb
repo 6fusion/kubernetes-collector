@@ -1,5 +1,4 @@
 RSpec.describe DiskSample do
-  
   describe 'fields' do
     it { is_expected.to have_fields(:reading_at, :usage_bytes, :read_kilobytes, :write_kilobytes) }
   end

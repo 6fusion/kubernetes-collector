@@ -1,4 +1,5 @@
-# This class defines the MongoDB structure of a machine disk sample that is sent to the 6fusion meter
+# This class defines the MongoDB structure of a machine disk sample that is sent
+# to the 6fusion meter
 class DiskSample
   include Mongoid::Document
 

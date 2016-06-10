@@ -1,5 +1,4 @@
 RSpec.describe Nic do
-  
   describe 'fields' do
     it { is_expected.to have_fields(:remote_id, :name, :kind) }
   end

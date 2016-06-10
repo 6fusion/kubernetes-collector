@@ -1,5 +1,4 @@
 RSpec.describe NicSample do
-  
   describe 'fields' do
     it { is_expected.to have_fields(:reading_at, :transmit_kilobits, :receive_kilobits) }
   end

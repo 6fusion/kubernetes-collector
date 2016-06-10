@@ -1,5 +1,4 @@
 RSpec.describe Disk do
-  
   describe 'fields' do
     it { is_expected.to have_fields(:remote_id, :name, :storage_bytes) }
   end

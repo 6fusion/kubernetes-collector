@@ -1,4 +1,5 @@
-# This class defines the MongoDB structure of a machine sample that is sent to the 6fusion meter
+# This class defines the MongoDB structure of a machine sample that is sent to
+# the 6fusion meter
 class MachineSample
   include Mongoid::Document
 
@@ -8,7 +9,7 @@ class MachineSample
 
   validates :reading_at,      presence: true
   validates :cpu_usage_percent,
-            :memory_bytes,    presence: true, numericality: { greater_than_or_equal_to: 0 }
+            :memory_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   belongs_to :machine
 end

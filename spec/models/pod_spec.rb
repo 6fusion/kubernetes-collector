@@ -1,5 +1,4 @@
 RSpec.describe Pod do
-  
   describe 'fields' do
     it { is_expected.to have_fields(:name) }
   end

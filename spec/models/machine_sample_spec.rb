@@ -1,5 +1,4 @@
 RSpec.describe MachineSample do
-  
   describe 'fields' do
     it { is_expected.to have_fields(:reading_at, :cpu_usage_percent, :memory_bytes) }
   end

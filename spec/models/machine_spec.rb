@@ -1,5 +1,4 @@
 RSpec.describe Machine do
-  
   describe 'fields' do
     it { is_expected.to have_fields(:remote_id, :name, :virtual_name, :cpu_count, :cpu_speed_hz, :memory_bytes, :tags, :status) }
   end

@@ -1,24 +1,22 @@
 RSpec.describe K8scollectorConfig do
-
   let(:secrets_dir) { "#{File.expand_path(File.dirname(__FILE__))}/../../kubernetes/secrets" }
-  let(:kube) { {
-    host:              '172.17.8.201',
-    url:               'http://172.17.8.201:8080/api/v1',
-    token:             'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiI2ZnVzaW9uLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2V',
-    headers:           {Authorization: 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiI2ZnVzaW9uLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2V'},
-    verify_ssl:        '0',
-    cadvisor_port:     '4194',
-    cadvisor_protocol: 'http'
-  } }
-  let(:on_premise) { {
-    url:               'http://172.17.8.201:80',
-    token:             'ydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZWZhdWx0LXRva2VuLXgyZnBmIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImRlZmF1bHQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW5',
-    verify_ssl:        '0',
-    organization_id:   '776163-55844452c8424317a20a7077fda22588'
-  } }
+  let(:kube) {
+    { host:              '172.17.8.201',
+      url:               'http://172.17.8.201:8080/api/v1',
+      token:             'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiI2ZnVzaW9uLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2V',
+      headers:           { Authorization: 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiI2ZnVzaW9uLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2V' },
+      verify_ssl:        '0',
+      cadvisor_port:     '4194',
+      cadvisor_protocol: 'http' }
+  }
+  let(:on_premise) {
+    { url:               'http://172.17.8.201:80',
+      token:             'ydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZWZhdWx0LXRva2VuLXgyZnBmIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImRlZmF1bHQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW5',
+      verify_ssl:        '0',
+      organization_id:   '776163-55844452c8424317a20a7077fda22588' }
+  }
 
   describe 'initialize' do
-
     it 'verifies the kube host' do
       allow(File).to receive(:exists?) { true }
       kube_host = File.read("#{secrets_dir}/kube/kube-host").chomp.strip
@@ -94,7 +92,5 @@ RSpec.describe K8scollectorConfig do
       subject.on_premise[:organization_id] = on_premise_orgid
       expect(subject.on_premise[:organization_id]).to eql(on_premise[:organization_id])
     end
-
   end
-
 end

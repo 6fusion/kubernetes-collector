@@ -72,6 +72,8 @@ class InventoryCollector
   end
 
   def collect_machines(infrastructure, on_prem_machines)
+    on_prem_disks = collect_machine_resources('disks')
+    on_prem_nics = collect_machine_resources('nics')
     infrastructure.hosts.each do |host|
       @logger.info "Collecting machines for host #{host.ip_address}..."
       response = CAdvisorAPI::request(@config, host.ip_address, 'stats/?type=docker&recursive=true&count=1')
@@ -95,8 +97,8 @@ class InventoryCollector
         disk_map = host_attributes['disk_map']
         storage_bytes = collect_disk_storage_bytes(disk_map)
 
-        collect_machine_disks(machine, storage_bytes)
-        collect_machine_nics(machine)
+        collect_machine_disks(machine, storage_bytes, on_prem_disks)
+        collect_machine_nics(machine, on_prem_nics)
       end
     end
     @logger.info "Total of infrastructure machines: #{Machine.count}."
@@ -158,7 +160,7 @@ class InventoryCollector
     end
   end
 
-  def collect_machine_disks(machine, storage_bytes)
+  def collect_machine_disks(machine, storage_bytes, on_prem_disks)
     @logger.info "Collecting disks for machine=#{machine.name}..."
     disk_name = "disk-#{machine.virtual_name[0...8]}"
     # Is this a new or an existing disk?
@@ -167,12 +169,12 @@ class InventoryCollector
     rescue Mongoid::Errors::DocumentNotFound
       disk = machine.disks.new(name: disk_name, storage_bytes: storage_bytes)
     end
-    disk.remote_id = get_remote_id('disk', machine, disk_name)
+    disk.remote_id = get_resource_remote_id('disks', machine, disk_name, on_prem_disks)
     disk.machine = machine
     disk.save!
   end
 
-  def collect_machine_nics(machine)
+  def collect_machine_nics(machine, on_prem_nics)
     @logger.info "Collecting nics for machine=#{machine.name}..."
     nic_name = "nic-#{machine.virtual_name[0...8]}"
     # Is this a new or an existing nic?
@@ -181,7 +183,7 @@ class InventoryCollector
     rescue Mongoid::Errors::DocumentNotFound
       nic = machine.nics.new(name: nic_name, kind: 'LAN')
     end
-    nic.remote_id = get_remote_id('nic', machine, nic_name)
+    nic.remote_id = get_resource_remote_id('nics', machine, nic_name, on_prem_nics)
     nic.machine = machine
     nic.save!
   end
@@ -214,29 +216,18 @@ class InventoryCollector
     remote_id
   end
 
-  def get_remote_id(type, machine, name)
+  def collect_machine_resources(type)
+      OnPremiseApi::request_api(type, :get, @config)['embedded'][type]
+  end
+
+  def get_resource_remote_id(type, machine, name, on_prem_resources)
     remote_id = nil
-    key = nil
-    case type.downcase
-    when 'disk'
-      key = 'disks'
-    when 'nic'
-      key = 'nics'
-    else
-      key = nil
-    end if type
-    if key
-      items = machine.remote_id ?
-              OnPremiseApi::request_api(key, :get, @config)['embedded'][key]
-              :
-              []
-      items.each do |item|
-        if name.eql? item['name']
-          remote_id = item['id']
-          break
-        end
+    on_prem_resources.each do |opr|
+      if name.eql? opr['name']
+        remote_id = opr['id']
+        break
       end
-    end
+    end if machine.remote_id
     remote_id
   end
 

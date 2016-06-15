@@ -1,0 +1,13 @@
+development:
+  clients:
+    default:
+      database: k8scollector
+      hosts:
+        - localhost:27017
+
+production:
+  clients:
+    default:
+      database: k8scollector
+      hosts:
+        - localhost:27017

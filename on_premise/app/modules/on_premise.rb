@@ -1,6 +1,6 @@
-# This class is responsible for initializing the collector values required
+# This class is responsible for initializing the connector values required
 # to carry out the whole process
-module K8scollector
+module OnPremise
   def init_logger
     logger = Logger.new(STDOUT)
     logger.level = Logger::DEBUG
@@ -13,7 +13,7 @@ module K8scollector
   end
 
   def load_configuration(logger)
-    logger.info 'Loading collector configuration values...'
-    K8scollectorConfig.new
+    logger.info 'Loading connector configuration values...'
+    OnPremiseConfig.new
   end
 end

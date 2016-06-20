@@ -63,6 +63,11 @@ spec:
       mountPath: /var/run/secrets/k8scollector/kube
     - name: on-premise-secret
       mountPath: /var/run/secrets/k8scollector/on-premise
+  - name: k8scollector-onpremise
+    image: 172.17.8.201:5000/k8scollector-onpremise # Docker image of the 6fusion Kubernetes On-Premise Connector
+    volumeMounts:
+    - name: on-premise-secret
+      mountPath: /var/run/secrets/k8scollector/on-premise
   - name: k8scollector-mongodb
     image: mongo:3.2
     volumeMounts:

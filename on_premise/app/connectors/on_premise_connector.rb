@@ -91,7 +91,7 @@ class OnPremiseConnector
       @stats[:infrastructure].remote_id ? update_infrastructure(@stats[:infrastructure]) : create_infrastructure(@stats[:infrastructure])
     rescue Mongoid::Errors::DocumentNotFound
       message = 'Infrastructure not found'
-      raise Exceptions::CollectorException, message
+      raise Exceptions::OnPremiseException, message
     end
   end
 
@@ -104,7 +104,7 @@ class OnPremiseConnector
         sync_nics(machine)
       rescue StandardError => e
         message = e.response ? JSON.parse(e.response)['message'] : e
-        raise Exceptions::CollectorException, message
+        raise Exceptions::OnPremiseException, message
       end
     end
   end
@@ -117,7 +117,7 @@ class OnPremiseConnector
         disk.remote_id ? update_disk(disk) : create_disk(disk)
       rescue StandardError => e
         message = e.response ? JSON.parse(e.response)['message'] : e
-        raise Exceptions::CollectorException, message
+        raise Exceptions::OnPremiseException, message
       end
     end
   end
@@ -130,7 +130,7 @@ class OnPremiseConnector
         nic.remote_id ? update_nic(nic) : create_nic(nic)
       rescue StandardError => e
         message = e.response ? JSON.parse(e.response)['message'] : e
-        raise Exceptions::CollectorException, message
+        raise Exceptions::OnPremiseException, message
       end
     end
   end
@@ -142,7 +142,7 @@ class OnPremiseConnector
         create_samples(machine)
       rescue StandardError => e
         message = e.response ? JSON.parse(e.response)['message'] : e
-        raise Exceptions::CollectorException, message
+        raise Exceptions::OnPremiseException, message
       end
     end
   end

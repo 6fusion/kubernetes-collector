@@ -1,2 +1,2 @@
 #!/bin/bash
-$APPDIR/k8scollector.sh
+clockwork $APPDIR/lib/tasks/on_premise.rb

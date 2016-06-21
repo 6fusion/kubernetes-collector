@@ -2,7 +2,7 @@
 
 # This is the kubernetes collector installer/uninstaller for a vagrant development environment
 
-# Note: please run this script from the root folder of the project
+# NOTE: this script must be run from the root folder of the project
 
 show_usage()
 {
@@ -66,10 +66,7 @@ case $COMMAND in
     ;;
   upgrade)
     echo "Shutting down 6fusion Kubernetes Collector before upgrading..."
-    kubectl delete pod 6fusion-k8scollector --namespace=6fusion-system
-    kubectl delete secret on-premise-secret --namespace=6fusion-system
-    kubectl delete secret kube-secret --namespace=6fusion-system
-    kubectl delete serviceaccount 6fusion-k8scollector --namespace=6fusion-system
+    kubectl delete -f ./kubernetes/k8scollector.yaml
     echo "Upgrading 6fusion Kubernetes Collector. Please wait..."
     sleep 30
     kubectl create -f ./kubernetes/k8scollector-namespace.yaml > /dev/null 2>&1
@@ -78,10 +75,7 @@ case $COMMAND in
     ;;
   uninstall)
     echo "Uninstalling 6fusion Kubernetes Collector..."
-    kubectl delete pod 6fusion-k8scollector --namespace=6fusion-system
-    kubectl delete secret on-premise-secret --namespace=6fusion-system
-    kubectl delete secret kube-secret --namespace=6fusion-system
-    kubectl delete serviceaccount 6fusion-k8scollector --namespace=6fusion-system
+    kubectl delete -f ./kubernetes/k8scollector.yaml
     echo -e "\e[97mUninstalling 6fusion Kubernetes Collector...\e[92mOK"
     ;;
   *)

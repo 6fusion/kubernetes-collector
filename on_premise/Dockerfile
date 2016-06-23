@@ -1,4 +1,4 @@
-# This image should be named: k8scollector (referenced in the kubernetes yaml file)
+# This image should be named: k8scollector-onpremise (referenced in the kubernetes yaml file)
 FROM alpine:3.2
 MAINTAINER 6fusion dev <dev@6fusion.com>
 
@@ -28,10 +28,10 @@ RUN \
   bundle install && \
 # Remove unnecessary files/folders
   rm -rf .git .gitignore
-
+ 
 # Add the entrypoint script
-ADD docker/apps/k8scollector/k8scollector-entrypoint.sh /
+ADD docker/apps/on_premise/on_premise-entrypoint.sh /
 # Give execution permissions to all scripts
-RUN chmod +x /k8scollector-entrypoint.sh $APPDIR/k8scollector.sh $APPDIR/k8scollectorctl
+RUN chmod +x /on_premise-entrypoint.sh 
 
-ENTRYPOINT ["/k8scollector-entrypoint.sh"]
+ENTRYPOINT ["/on_premise-entrypoint.sh"]

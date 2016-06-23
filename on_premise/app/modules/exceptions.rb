@@ -1,5 +1,5 @@
-# This class is responsible for handle exceptions for collector
+# This class is responsible for handle exceptions for on-premise
 module Exceptions
-  class CollectorException < StandardError
+  class OnPremiseException < StandardError
   end
 end

@@ -1,33 +1,34 @@
 #!/usr/bin/env ruby
 require './config/defaults'
 
-# Initialize the application logger
-logger = K8scollector::init_logger
-
-logger.info 'Initializing Kubernetes collector...'
-
 begin
+  # Initialize the application logger
+  logger = OnPremise::init_logger
+  logger.info 'Initializing On-Premise connector...'
+
   # Initialize MongoDB connection
-  K8scollector::init_mongodb(logger)
+  OnPremise::init_mongodb(logger)
 
   # Load configuration values
-  config = K8scollector::load_configuration(logger)
+  config = OnPremise::load_configuration(logger)
+
+  # Define the on-premise connector scheduled job 	 
+  handler do |job|
+  	if job.eql?('on-premise.connect')
+  	  begin
+  	  	# Initialize On-Premise connector
+    	OnPremiseConnector.new(logger, config).sync 
+    	logger.info 'On-Premise connector finished successfully...'
+  	  rescue
+  	  	logger.error e
+        logger.error 'On-Premise connector process couldn\'t finish. Waiting for the next run...'
+  	  end
+  	end
+  end
 
   # If we hit a 5 minute interval, submit the samples to the On Premise API
-  # Initialize On-Premise connector
-  OnPremiseConnector.new(logger, config).sync if Time.now.utc.min % 5 == 0
-
-  # Collect the inventory
-  InventoryCollector.new(logger, config).collect
-
-  # Collect the metrics
-  MetricsCollector.new(logger, config).collect
-
-  # Remove old cache db data
-  CleanCacheData::remove_old_data(logger, config)
-
-  logger.info 'Kubernetes collector finished successfully...'
+  every(ON_PREMISE_SCHEDULER_PERIOD, 'on-premise.connect', :thread => true, :if => lambda { |t| t.minute % 5 == 0 })
 rescue Exception => e
   logger.error e
-  logger.error 'Kubernetes collector aborted'
+  logger.error 'On-Premise connector process aborted'
 end

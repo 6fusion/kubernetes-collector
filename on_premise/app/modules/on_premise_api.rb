@@ -1,4 +1,4 @@
-# This class is responsible for making the requests to the 6fusion meter
+# This class is responsible for making requests to the 6fusion meter
 # On Premise API
 module OnPremiseApi
   def request_api(endpoint, method, config, parameters = nil)
@@ -13,7 +13,7 @@ module OnPremiseApi
     rescue Exception => e
       Logger.new(STDOUT).error "Operational error with the 6fusion meter API at #{config.on_premise[:url]}. See error details below:"
       message = e.message
-      raise Exceptions::CollectorException, message
+      raise Exceptions::OnPremiseException, message
     end
   end
 end

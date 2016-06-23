@@ -1,7 +1,6 @@
 require 'mongoid'
 require 'rest-client'
 require 'clockwork'
-include Clockwork
 Dir.glob("./app/**/*.rb").each {|file| require file}
 
 INVENTORY_SCHEDULER_PERIOD = 30.seconds
@@ -12,6 +11,7 @@ CADVISOR_API_VERSION = 'v2.0'
 ONPREMISE_API_VERSION = 'v1'
 METERING_TIMEOUT = 30.seconds
 
+include Clockwork
 include Inventory
 include KubeAPI
 include CAdvisorAPI

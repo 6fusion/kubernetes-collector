@@ -2,14 +2,16 @@
 class Machine
   include Mongoid::Document
 
-  field :remote_id,    type: String
-  field :name,         type: String
-  field :virtual_name, type: String
-  field :cpu_count,    type: Integer
-  field :cpu_speed_hz, type: Integer
-  field :memory_bytes, type: Integer
-  field :tags,         type: Array
-  field :status,       type: String
+  field :remote_id,           type: String
+  field :name,                type: String
+  field :virtual_name,        type: String
+  field :cpu_count,           type: Integer
+  field :cpu_speed_hz,        type: Integer
+  field :memory_bytes,        type: Integer
+  field :tags,                type: Array
+  field :status,              type: String
+  field :metering_status,     type: String  # PENDING,METERING,METERED
+  field :last_metering_start, type: DateTime
 
   validates :name, :virtual_name, :status, :tags, presence: true
   validates :cpu_count,

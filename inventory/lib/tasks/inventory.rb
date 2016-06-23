@@ -2,32 +2,37 @@
 require './config/defaults'
 
 # Initialize the application logger
-logger = K8scollector::init_logger
+logger = Inventory::init_logger
 
-logger.info 'Initializing Kubernetes collector...'
+logger.info 'Initializing Kubernetes Inventory collector...'
 
 begin
   # Initialize MongoDB connection
-  K8scollector::init_mongodb(logger)
+  Inventory::init_mongodb(logger)
 
   # Load configuration values
-  config = K8scollector::load_configuration(logger)
+  config = Inventory::load_configuration(logger)
 
-  # If we hit a 5 minute interval, submit the samples to the On Premise API
-  # Initialize On-Premise connector
-  OnPremiseConnector.new(logger, config).sync if Time.now.utc.min % 5 == 0
+  logger.info 'Kubernetes Inventory collector initialized successfully...'
+  logger.info 'Waiting to start collecting the inventory...'
 
-  # Collect the inventory
-  InventoryCollector.new(logger, config).collect
+  # Define the inventory collector scheduled job
+  handler do |job|
+    if job.eql?('inventory.collect')
+      begin
+        # Collect the inventory
+        InventoryCollector.new(logger, config).collect
+        logger.info 'Inventory collected successfully...'
+      rescue Exception => e
+        logger.error e
+        logger.error 'Inventory collection process couldn\'t finish. Waiting for the next run...'
+      end
+    end
+  end
 
-  # Collect the metrics
-  MetricsCollector.new(logger, config).collect
-
-  # Remove old cache db data
-  CleanCacheData::remove_old_data(logger, config)
-
-  logger.info 'Kubernetes collector finished successfully...'
+  # Schedule the inventory collector job
+  every(INVENTORY_SCHEDULER_PERIOD, 'inventory.collect', :thread => true)
 rescue Exception => e
   logger.error e
-  logger.error 'Kubernetes collector aborted'
+  logger.error 'Kubernetes Inventory collector aborted. Please check the configuration values.'
 end

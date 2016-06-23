@@ -4,7 +4,7 @@ class Pod
 
   field :name, type: String
 
-  validates :name, presence: true
+  validates :name, :infrastructure, presence: true
 
   has_many   :machines
   belongs_to :infrastructure

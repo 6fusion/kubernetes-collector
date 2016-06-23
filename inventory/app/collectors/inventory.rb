@@ -7,6 +7,7 @@ class InventoryCollector
   def initialize(logger, config)
     @logger = logger
     @config = config
+    @data = { running_machines_vnames: [] }
   end
 
   def collect
@@ -16,14 +17,19 @@ class InventoryCollector
     on_prem_machines = collect_on_prem_machines(infrastructure)
     collect_machines(infrastructure, on_prem_machines)
     # Collect the pods for this infrastructure so we can update their machines information
-    collect_pods.each {|pod| update_pod_machines(pod)}
+    collect_pods(infrastructure).each {|pod| update_pod_machines(pod)}
     # If there are pods that belong to a service, then tag their machines with the corresponding service
     tag_service_pods_machines
+    # Power off dead machines so they are not metered anymore
+    poweroff_dead_machines
+    # Reset metering status if all running machines have been metered
+    reset_machines_metering_status
   end
 
   def verify_organization
+    @logger.info 'Verifying current organization...'
     # Verify that the Organization exists in the On Premise API. Otherwise, raise an exception.
-    response = OnPremiseApi::request_api("organizations/#{@config.on_premise[:organization_id]}", :get, @config)
+    OnPremiseApi::request_api("organizations/#{@config.on_premise[:organization_id]}", :get, @config)
   end
 
   def collect_infrastructure
@@ -33,7 +39,9 @@ class InventoryCollector
     # Does the infrastructure exist?
     begin
       infrastructure = Infrastructure.find_by(name: infrastructure_name)
-      # NUEVA ORGANIZATION: NUEVO TODO!!!
+      # If the infrastructure's organization doesn't match the config organization, then
+      # delete everything and start from scratch
+      reset_cache_db if infrastructure.organization_id != @config.on_premise[:organization_id]
     rescue Mongoid::Errors::DocumentNotFound
       infrastructure = Infrastructure.create(name: infrastructure_name,
                                              organization_id: @config.on_premise[:organization_id],
@@ -95,6 +103,8 @@ class InventoryCollector
         machine.remote_id = get_machine_remote_id(machine, on_prem_machines)
         machine.save!
 
+        @data[:running_machines_vnames] << machine.virtual_name
+
         disk_map = host_attributes['disk_map']
         storage_bytes = collect_disk_storage_bytes(disk_map)
 
@@ -105,7 +115,7 @@ class InventoryCollector
     @logger.info "Total of infrastructure machines: #{Machine.count}."
   end
 
-  def collect_pods
+  def collect_pods(infrastructure)
     @logger.info 'Collecting pods for the infrastructure...'
     response = KubeAPI::request(@config, 'pods')
     response['items'].each do |pod|
@@ -113,7 +123,7 @@ class InventoryCollector
       begin
         db_object = Pod.find_by(name: pod['metadata']['name'])
       rescue Mongoid::Errors::DocumentNotFound
-        db_object = Pod.create(name: pod['metadata']['name'])
+        db_object = Pod.create(name: pod['metadata']['name'], infrastructure: infrastructure)
       end
       pod['db_object'] = db_object
     end
@@ -126,7 +136,6 @@ class InventoryCollector
       pod['status']['containerStatuses'].each do |container|
         if container['ready']
           container_id = container['containerID'].split("//").last
-          host = pod['status']['hostIP']
           # Look for this machine in the cache db
           begin
             machine = Machine.find_by(virtual_name: container_id)
@@ -230,6 +239,55 @@ class InventoryCollector
       end
     end if machine.remote_id
     remote_id
+  end
+
+  def poweroff_dead_machines
+    @logger.info 'Powering off dead machines...'
+    Machine.where(:virtual_name.nin => @data[:running_machines_vnames]).update_all(status: 'poweredOff')
+  end
+
+  def reset_machines_metering_status
+    @logger.info 'Verifying the metering status of machines...'
+    pending_machines_count = get_pending_machines.count
+    if pending_machines_count > 0
+      # Do not do anything if there are still machines to be metered on in-process metering
+      @logger.info "There are still #{pending_machines_count} machines left to be metered. They will be checked on the next run."
+    else
+      @logger.info 'All machines are ready for metrics. Preparing them to be metered again...'
+      get_ready_machines.update_all(metering_status: 'PENDING', last_metering_start: nil)
+    end
+  end
+
+  def get_pending_machines
+    Machine.where(status: 'poweredOn')
+      .or(
+        { metering_status: 'PENDING' },
+        { metering_status: 'METERING', :last_metering_start.gt => Time.now - METERING_TIMEOUT }
+      )
+  end
+
+  def get_ready_machines
+    Machine.where(status: 'poweredOn')
+      .or(
+        { :metering_status.in => [nil, 'METERED'] },
+        { metering_status: 'METERING', :last_metering_start.lte => Time.now - METERING_TIMEOUT }
+      )
+  end
+
+  def reset_cache_db
+    NicSample.delete_all
+    DiskSample.delete_all
+    MachineSample.delete_all
+    Nic.delete_all
+    Disk.delete_all
+    Machine.delete_all
+    Pod.delete_all
+    HostNic.delete_all
+    HostDisk.delete_all
+    HostCpu.delete_all
+    Host.delete_all
+    Infrastructure.delete_all
+    raise Mongoid::Errors::DocumentNotFound
   end
 
 end

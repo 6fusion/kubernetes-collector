@@ -1,4 +1,4 @@
-# This image should be named: k8scollector (referenced in the kubernetes yaml file)
+# This image should be named: k8scollector-inventory (referenced in the K8scollector yaml file)
 FROM alpine:3.2
 MAINTAINER 6fusion dev <dev@6fusion.com>
 
@@ -30,8 +30,8 @@ RUN \
   rm -rf .git .gitignore
 
 # Add the entrypoint script
-ADD docker/apps/k8scollector/k8scollector-entrypoint.sh /
-# Give execution permissions to all scripts
-RUN chmod +x /k8scollector-entrypoint.sh $APPDIR/k8scollector.sh $APPDIR/k8scollectorctl
+ADD docker/apps/inventory/inventory-entrypoint.sh /
+# Give execution permissions to scripts
+RUN chmod +x /inventory-entrypoint.sh
 
-ENTRYPOINT ["/k8scollector-entrypoint.sh"]
+ENTRYPOINT ["/inventory-entrypoint.sh"]

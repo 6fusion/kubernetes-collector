@@ -27,7 +27,7 @@ begin
   end
 
   # If we hit a 5 minute interval, submit the samples to the On Premise API
-  every(ON_PREMISE_SCHEDULER_PERIOD, 'on-premise.connect', :thread => true, :if => lambda { |t| t.minute % 5 == 0 })
+  every(ON_PREMISE_SCHEDULER_PERIOD, 'on-premise.connect', :thread => true, :if => lambda { |t| t.min % 5 == 0 })
 rescue Exception => e
   logger.error e
   logger.error 'On-Premise connector process aborted'

@@ -12,8 +12,11 @@ class Machine
   field :status,              type: String
   field :metering_status,     type: String  # PENDING,METERING,METERED
   field :last_metering_start, type: DateTime
+  field :host_ip_address,     type: String
+  field :locked,              type: Boolean
+  field :locked_by,           type: String
 
-  validates :name, :virtual_name, :status, :tags, presence: true
+  validates :name, :virtual_name, :status, :host_ip_address, :tags, presence: true
   validates :cpu_count,
             :cpu_speed_hz,
             :memory_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }

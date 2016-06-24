@@ -3,11 +3,10 @@ development:
     default:
       database: k8scollector
       hosts:
-        - localhost:27017
-
+        <%= ENV.has_key?('K8SCOLLECTOR_MASTER_PORT_27017_TCP_ADDR') and ENV.has_key?('K8SCOLLECTOR_MASTER_PORT_27017_TCP_PORT') ? "- #{ENV['K8SCOLLECTOR_MASTER_PORT_27017_TCP_ADDR']}:#{ENV['K8SCOLLECTOR_MASTER_PORT_27017_TCP_PORT']}" : '- localhost:27017' %>
 production:
   clients:
     default:
       database: k8scollector
       hosts:
-        - localhost:27017
+        <%= ENV.has_key?('K8SCOLLECTOR_MASTER_PORT_27017_TCP_ADDR') and ENV.has_key?('K8SCOLLECTOR_MASTER_PORT_27017_TCP_PORT') ? "- #{ENV['K8SCOLLECTOR_MASTER_PORT_27017_TCP_ADDR']}:#{ENV['K8SCOLLECTOR_MASTER_PORT_27017_TCP_PORT']}" : '- localhost:27017' %>

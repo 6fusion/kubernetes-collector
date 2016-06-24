@@ -8,20 +8,26 @@ class MetricsCollector
 
   def collect
     @logger.info 'Collecting metrics for the infrastructure...'
-    metrics = {}
-    Infrastructure.first.hosts.each do |host|
-      @logger.info "Collecting metrics for host #{host.ip_address}..."
-      metrics_response = CAdvisorAPI::request(@config, host.ip_address, "stats/?type=docker&recursive=true&count=#{CADVISOR_SAMPLES_COUNT}")
-      metrics.merge!(metrics_response)
+
+    metered_machines = 0
+
+    get_candidate_machines_to_be_metered.each do |machine|
+      if machine_unlocked? machine
+        machine.locked = true
+        machine.locked_by = @config.container[:hostname]
+        machine.metering_status = 'METERING'
+        machine.last_metering_start = Time.now
+        machine.save!
+      end
     end
 
-    # Transform metrics keys so they can match a docker container ID
-    metrics.keys.each {|k| metrics[k.split('/').last.split('docker-').last.split('.scope').first] = metrics.delete(k)}
-
-    Machine.all.each do |machine|
-      @logger.info("Collecting metrics for #{machine.name} container...")
+    get_final_machines_to_be_metered.each do |machine|
+      next if not machine_free_to_meter? machine
+      metered_machines += 1
+      @logger.info "Collecting metrics for #{machine.name} container..."
+      metrics = CAdvisorAPI::request(@config, machine.host_ip_address, "stats/#{machine.virtual_name}/?type=docker&count=#{CADVISOR_SAMPLES_COUNT}")
       previous_sample = nil
-      samples = metrics["#{machine.virtual_name}"]
+      samples = metrics[metrics.keys.first]
       samples.each do |sample|
         if previous_sample
           machine_sample = machine.machine_samples.new(reading_at: sample['timestamp'])
@@ -72,8 +78,46 @@ class MetricsCollector
           previous_sample['network_bytes_transmit'] = sample['network']['interfaces'][0]['tx_bytes']
         end unless sample['network'].empty?
       end if samples
+      machine.locked = false
+      machine.locked_by = ''
+      machine.metering_status = 'METERED'
+      machine.save!
       @logger.info("Collected metrics for #{machine.name} successfully.")
     end
+    if metered_machines > 0
+      @logger.info("Total machines metered in this run: #{metered_machines}")
+    else
+      @logger.info('Found no machines to be metered. Waiting for the next run.')
+    end
+  end
+
+  def get_candidate_machines_to_be_metered
+    Machine.where(status: 'poweredOn')
+      .or(
+        { metering_status: 'PENDING' },
+        { metering_status: 'METERING', :last_metering_start.lt => Time.now - METERING_TIMEOUT }
+      )
+      .limit(MACHINES_LIMIT)
+  end
+
+  def get_final_machines_to_be_metered
+    Machine.where(locked:          true,
+                  locked_by:       @config.container[:hostname],
+                  status:          'poweredOn',
+                  metering_status: 'METERING')
+  end
+
+  def machine_unlocked?(machine)
+    not machine.locked ||
+    (machine.locked && machine.locked_by == @config.container[:hostname])
+  end
+
+  def machine_free_to_meter?(machine)
+    machine.reload
+    machine.locked &&
+    machine.locked_by == @config.container[:hostname] &&
+    machine.status == 'poweredOn' &&
+    machine.metering_status == 'METERING'
   end
 
 end

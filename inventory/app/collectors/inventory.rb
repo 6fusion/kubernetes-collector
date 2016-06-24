@@ -97,6 +97,7 @@ class InventoryCollector
         machine.status = 'poweredOn'  # Containers retrieved through cAdvisor are running by default
         machine.tags = ['type:container', 'platform:kubernetes']
         host_attributes = CAdvisorAPI::request(@config, host.ip_address, 'attributes')
+        machine.host_ip_address = host.ip_address
         machine.cpu_count = host_attributes['num_cores']
         machine.cpu_speed_hz = host_attributes['cpu_frequency_khz'] * 1000
         machine.memory_bytes = host_attributes['memory_capacity']
@@ -254,7 +255,7 @@ class InventoryCollector
       @logger.info "There are still #{pending_machines_count} machines left to be metered. They will be checked on the next run."
     else
       @logger.info 'All machines are ready for metrics. Preparing them to be metered again...'
-      get_ready_machines.update_all(metering_status: 'PENDING', last_metering_start: nil)
+      get_ready_machines.update_all(metering_status: 'PENDING', last_metering_start: nil, locked: false, locked_by: '')
     end
   end
 

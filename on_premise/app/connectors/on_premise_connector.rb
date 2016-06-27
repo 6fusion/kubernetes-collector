@@ -18,7 +18,8 @@ class OnPremiseConnector
                       samples_submitted: 0,
                       infrastructure:    nil,
                       machines:          [],
-                      machine_samples:   [] }
+                      machine_samples:   [],
+                      powered_off_machines: [] }
   end
 
   def sync
@@ -31,6 +32,7 @@ class OnPremiseConnector
   end
 
   def obtain_data
+    obtain_powered_off_machines
     obtain_last_samples
     obtain_records
   end
@@ -40,6 +42,7 @@ class OnPremiseConnector
     sync_infrastructures
 
     @logger.info 'Syncing machines...'
+    sync_powered_off_machines
     sync_machines
 
     @logger.info 'Submitting samples...'
@@ -69,6 +72,10 @@ class OnPremiseConnector
     @logger.info "Updated #{@stats[:updated_disks]} disks."
     @logger.info "Updated #{@stats[:updated_nics]} nics."
     @logger.info "Submitted #{@stats[:samples_submitted]} samples."
+  end
+
+  def obtain_powered_off_machines
+    @stats[:powered_off_machines] = Machine.all.select{|x| x.machine_samples.exists? == false && x.status == 'poweredOff'}
   end
 
   def obtain_last_samples
@@ -102,6 +109,18 @@ class OnPremiseConnector
         machine.remote_id ? update_machine(machine) : create_machine(machine)
         sync_disks(machine)
         sync_nics(machine)
+      rescue StandardError => e
+        message = e.response ? JSON.parse(e.response)['message'] : e
+        raise Exceptions::OnPremiseException, message
+      end
+    end
+  end
+
+  # Updates machines with status = 'powerOff'
+  def sync_powered_off_machines
+    @stats[:powered_off_machines].each do |machine|
+      begin
+        machine.remote_id ? update_machine(machine) : create_machine(machine)
       rescue StandardError => e
         message = e.response ? JSON.parse(e.response)['message'] : e
         raise Exceptions::OnPremiseException, message

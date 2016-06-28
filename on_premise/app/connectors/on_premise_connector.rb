@@ -75,7 +75,11 @@ class OnPremiseConnector
   end
 
   def obtain_powered_off_machines
-    @stats[:powered_off_machines] = Machine.all.select{|x| x.machine_samples.exists? == false && x.status == 'poweredOff'}
+    @stats[:powered_off_machines] = Machine.all.select{|x| powered_off_machine?(x)}
+  end
+
+  def powered_off_machine?(machine)
+    machine.machine_samples.exists? == false && machine.status == Machine::STATUS_POWERED_OFF
   end
 
   def obtain_last_samples

@@ -2,6 +2,10 @@
 class Machine
   include Mongoid::Document
 
+  STATUS_POWERED_OFF = 'poweredOff'
+  STATUS_POWERED_ON  = 'poweredOn'
+  STATUS_PAUSED      = 'paused'
+
   field :remote_id,    type: String
   field :name,         type: String
   field :virtual_name, type: String
@@ -10,6 +14,8 @@ class Machine
   field :memory_bytes, type: Integer
   field :tags,         type: Array
   field :status,       type: String
+  field :metering_status,     type: String  # PENDING,METERING,METERED
+  field :last_metering_start, type: DateTime
 
   validates :name, :virtual_name, :status, :tags, presence: true
   validates :cpu_count,

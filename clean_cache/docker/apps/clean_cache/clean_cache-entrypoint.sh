@@ -1,2 +1,2 @@
 #!/bin/bash
-$APPDIR/k8scollector.sh
+clockwork $APPDIR/lib/tasks/clean_cache.rb

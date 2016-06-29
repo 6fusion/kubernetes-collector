@@ -14,7 +14,7 @@ begin
   config = Inventory::load_configuration(logger)
 
   logger.info 'Kubernetes Inventory collector initialized successfully...'
-  logger.info 'Waiting to start collecting the inventory...'
+  logger.info 'Collecting inventory...'
 
   # Define the inventory collector scheduled job
   handler do |job|

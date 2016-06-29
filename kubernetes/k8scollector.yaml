@@ -83,6 +83,34 @@ spec:
   - name: "k8scollector-mongodb"
     hostPath:
       path: "/var/lib/k8scollector/data/db"
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: 6fusion-k8scollector-metrics
+  namespace: 6fusion-system
+  labels:
+    6fusion-app: k8scollector-metrics
+spec:
+  replicas: 2
+  selector:
+    6fusion-app: k8scollector-metrics
+  template:
+    metadata:
+      name: 6fusion-k8scollector-metrics
+      labels:
+        6fusion-app: k8scollector-metrics
+    spec:
+      containers:
+      - name: k8scollector-metrics
+        image: 172.17.8.201:5000/k8scollector-metrics # Docker image of the 6fusion Kubernetes Metrics Collector
+        volumeMounts:
+        - name: kube-secret
+          mountPath: /var/run/secrets/k8scollector/kube
+      volumes:
+      - name: kube-secret
+        secret:
+          secretName: kube-secret
 
 # ORIGINAL YAML FILE TEMPORARY BACKUP
 #

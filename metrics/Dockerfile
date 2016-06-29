@@ -30,8 +30,8 @@ RUN \
   rm -rf .git .gitignore
 
 # Add the entrypoint script
-ADD docker/apps/k8scollector/k8scollector-entrypoint.sh /
-# Give execution permissions to all scripts
-RUN chmod +x /k8scollector-entrypoint.sh $APPDIR/k8scollector.sh $APPDIR/k8scollectorctl
+ADD docker/apps/metrics/metrics-entrypoint.sh /
+# Give execution permissions to scripts
+RUN chmod +x /metrics-entrypoint.sh
 
-ENTRYPOINT ["/k8scollector-entrypoint.sh"]
+ENTRYPOINT ["/metrics-entrypoint.sh"]

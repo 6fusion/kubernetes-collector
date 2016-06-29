@@ -16,6 +16,9 @@ class Machine
   field :status,       type: String
   field :metering_status,     type: String  # PENDING,METERING,METERED
   field :last_metering_start, type: DateTime
+  field :host_ip_address,     type: String
+  field :locked,              type: Boolean
+  field :locked_by,           type: String
 
   validates :name, :virtual_name, :status, :tags, presence: true
   validates :cpu_count,

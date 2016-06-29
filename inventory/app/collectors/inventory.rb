@@ -49,11 +49,11 @@ class InventoryCollector
     end
     # Clear host information so we can refresh it
     infrastructure.hosts.each do |host|
-      host.host_cpus.delete_all
-      host.host_nics.delete_all
-      host.host_disks.delete_all
+      host.host_cpus.destroy_all
+      host.host_nics.destroy_all
+      host.host_disks.destroy_all
     end
-    infrastructure.hosts.delete_all
+    infrastructure.hosts.destroy_all
     # Recreate hosts information
     nodes_response = KubeAPI::request(@config, 'nodes')
     nodes_response['items'].each do |node|
@@ -276,18 +276,18 @@ class InventoryCollector
   end
 
   def reset_cache_db
-    NicSample.delete_all
-    DiskSample.delete_all
-    MachineSample.delete_all
-    Nic.delete_all
-    Disk.delete_all
-    Machine.delete_all
-    Pod.delete_all
-    HostNic.delete_all
-    HostDisk.delete_all
-    HostCpu.delete_all
-    Host.delete_all
-    Infrastructure.delete_all
+    NicSample.destroy_all
+    DiskSample.destroy_all
+    MachineSample.destroy_all
+    Nic.destroy_all
+    Disk.destroy_all
+    Machine.destroy_all
+    Pod.destroy_all
+    HostNic.destroy_all
+    HostDisk.destroy_all
+    HostCpu.destroy_all
+    Host.destroy_all
+    Infrastructure.destroy_all
     raise Mongoid::Errors::DocumentNotFound
   end
 

@@ -17,9 +17,9 @@ begin
   	if job.eql?('on-premise.connect')
   	  begin
   	  	# Initialize On-Premise connector
-    	OnPremiseConnector.new(logger, config).sync 
-    	logger.info 'On-Premise connector finished successfully...'
-  	  rescue
+    	  OnPremiseConnector.new(logger, config).sync 
+    	  logger.info 'On-Premise connector finished successfully...'
+  	  rescue Exception => e
   	  	logger.error e
         logger.error 'On-Premise connector process couldn\'t finish. Waiting for the next run...'
   	  end

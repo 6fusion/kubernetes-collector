@@ -25,7 +25,7 @@ COPY . $APPDIR
 
 RUN \
 # Install the gems required by the application
-  bundle install && \
+  bundle install --without test && \
 # Remove unnecessary files/folders
   rm -rf .git .gitignore
 

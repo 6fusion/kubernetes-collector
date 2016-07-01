@@ -7,16 +7,25 @@ metadata:
 apiVersion: v1
 kind: Secret
 metadata:
+  name: registry-pull-secret
+  namespace: 6fusion-system
+data:
+  .dockerconfigjson: # Put here the base64 encoded string of your config.json file that contains the credentials to access docker hub
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: kube-secret
   namespace: 6fusion-system
 data:
-  kube-host: "MTcyLjE3LjguMjAxCg=="      # IP address or domain of the kubernetes API server
-  kube-port: "ODA4MAo="                  # Port of the kubernetes API server
-  kube-token: ""                         # Token of the kubernetes API server (leave the empty string if no token is to be used)
-  kube-use-ssl: "MAo="                   # Use 1 for true and 0 for false
-  kube-verify-ssl: "MAo="                # Use 1 for true and 0 for false
-  cadvisor-host: "MTcyLjE3LjguMjAxCg=="  # IP address or domain of the cluster master cAdvisor host
-  cadvisor-port: "NDE5NAo="              # cAdvisor port (usually 4194)
+  kube-host: "BASE64_VALUE"              # IP address or domain of the kubernetes API server
+  kube-port: "BASE64_VALUE"              # Port of the kubernetes API server
+  kube-token: "BASE64_VALUE"             # Token of the kubernetes API server (specify only for a remote Kube API Server)
+  kube-use-ssl: "BASE64_VALUE"           # Use 1 for true and 0 for false
+  kube-verify-ssl: "BASE64_VALUE"        # Use 1 for true and 0 for false
+  cadvisor-host: "BASE64_VALUE"          # IP address or domain of the cluster master cAdvisor host
+  cadvisor-port: "BASE64_VALUE"          # cAdvisor port (usually 4194)
 ---
 apiVersion: v1
 kind: Secret
@@ -24,12 +33,12 @@ metadata:
   name: on-premise-secret
   namespace: 6fusion-system
 data:
-  host: "MTcyLjE3LjguMjAxCg=="  # IP address or domain of the 6fusion On Premise API server
-  port: "ODAK"                  # Port of the 6fusion On Premise API server
-  token: ""                     # Token to access the 6fusion On Premise API server (leave the empty string if no token is to be used)
-  use-ssl: "MAo="               # Use 1 for true and 0 for false
-  verify-ssl: "MAo="            # Use 1 for true and 0 for false
-  organization-id: "Nzc2MTYzLTM3OTg2ZjkzMTY2NzRlNWQ5ZTY0ZjRmNTQyMDQ3NTRlCg=="  # Organization ID of the one already created in the 6fusion On Premise API server
+  host: "BASE64_VALUE="            # IP address or domain of the 6fusion On Premise API server
+  port: "BASE64_VALUE"             # Port of the 6fusion On Premise API server
+  token: "BASE64_VALUE"            # Token to access the 6fusion On Premise API server (leave the empty string if no token is to be used)
+  use-ssl: "BASE64_VALUE"          # Use 1 for true and 0 for false
+  verify-ssl: "BASE64_VALUE"       # Use 1 for true and 0 for false
+  organization-id: "BASE64_VALUE"  # Organization ID of the one already created in the 6fusion On Premise API server
 ---
 apiVersion: v1
 kind: Service
@@ -57,19 +66,19 @@ metadata:
 spec:
   containers:
   - name: k8scollector-inventory
-    image: 172.17.8.201:5000/k8scollector-inventory # Docker image of the 6fusion Kubernetes Inventory Collector
+    image: 6fusion/k8collector-inventory # Docker image of the 6fusion Kubernetes Inventory Collector
     volumeMounts:
     - name: kube-secret
       mountPath: /var/run/secrets/k8scollector/kube
     - name: on-premise-secret
       mountPath: /var/run/secrets/k8scollector/on-premise
   - name: k8scollector-onpremise
-    image: 172.17.8.201:5000/k8scollector-onpremise # Docker image of the 6fusion Kubernetes On-Premise Connector
+    image: 6fusion/k8collector-onpremise # Docker image of the 6fusion Kubernetes On-Premise Connector
     volumeMounts:
     - name: on-premise-secret
       mountPath: /var/run/secrets/k8scollector/on-premise
   - name: k8scollector-cleancache
-    image: 172.17.8.201:5000/k8scollector-cleancache # Docker image of the 6fusion Kubernetes Clean Cache db
+    image: 6fusion/k8collector-cleancache # Docker image of the 6fusion Kubernetes Clean Cache db
   - name: k8scollector-mongodb
     image: mongo:3.2
     volumeMounts:
@@ -85,6 +94,8 @@ spec:
   - name: "k8scollector-mongodb"
     hostPath:
       path: "/var/lib/k8scollector/data/db"
+  imagePullSecrets:
+    - name: registry-pull-secret
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -105,7 +116,7 @@ spec:
     spec:
       containers:
       - name: k8scollector-metrics
-        image: 172.17.8.201:5000/k8scollector-metrics # Docker image of the 6fusion Kubernetes Metrics Collector
+        image: 6fusion/k8collector-metrics # Docker image of the 6fusion Kubernetes Metrics Collector
         volumeMounts:
         - name: kube-secret
           mountPath: /var/run/secrets/k8scollector/kube
@@ -113,3 +124,5 @@ spec:
       - name: kube-secret
         secret:
           secretName: kube-secret
+      imagePullSecrets:
+        - name: registry-pull-secret

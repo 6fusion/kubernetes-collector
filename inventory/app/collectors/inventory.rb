@@ -12,7 +12,6 @@ class InventoryCollector
 
   def collect
     @logger.info 'Collecting inventory...'
-    verify_organization
     infrastructure = collect_infrastructure
     on_prem_machines = collect_on_prem_machines(infrastructure)
     collect_machines(infrastructure, on_prem_machines)
@@ -24,12 +23,6 @@ class InventoryCollector
     poweroff_dead_machines
     # Reset metering status if all running machines have been metered
     reset_machines_metering_status
-  end
-
-  def verify_organization
-    @logger.info 'Verifying current organization...'
-    # Verify that the Organization exists in the On Premise API. Otherwise, raise an exception.
-    OnPremiseApi::request_api("organizations/#{@config.on_premise[:organization_id]}", :get, @config)
   end
 
   def collect_infrastructure

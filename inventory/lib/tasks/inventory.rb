@@ -13,6 +13,9 @@ begin
   # Load configuration values
   config = Inventory::load_configuration(logger)
 
+  # Verify that the Organization exists in the On Premise API
+  Inventory::verify_organization(logger, config)
+
   logger.info 'Kubernetes Inventory collector initialized successfully...'
   logger.info 'Collecting inventory...'
 

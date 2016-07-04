@@ -5,7 +5,7 @@
 ### Server requirements
 
 * A CoreOS operating system (recommended) or any Kubernetes compatible Linux distribution
-* A Kubernetes cluster running properly with its containers, API Server and binaries
+* A Kubernetes cluster running properly with its containers, binaries, API Server and cAdvisor API
 
 ### Local computer requirements
 
@@ -14,9 +14,16 @@
 * Download this repository to your local computer
 
 ### Kubernetes configuration values
-Go to the folder where you downloaded this repository and edit the file `kubernetes/k8scollector.yaml`. And set the following values according to your needs:
-(note: all values **must** be base64 encoded; a handy command (if available in your operating system) to encode a value is: `echo YOUR_VALUE | grep base64`)
+Go to the folder where you downloaded this repository, edit the file `kubernetes/k8scollector.yaml` and set the following values according to your needs:
+(note: all values **must** be base64 encoded; a handy command (if available in your operating system) to encode a value is: `echo YOUR_VALUE | base64`)
 
+**Registry Pull Secret section (registry-pull-secret)**
+```
+...
+data:
+  .dockerconfigjson: # Put here the base64 encoded string of your config.json file that contains the credentials to access the docker hub account where the Kubernetes collector private repositories are allocated
+...
+```
 **Kube Secret section (kube-secret)**
 ```
 ...

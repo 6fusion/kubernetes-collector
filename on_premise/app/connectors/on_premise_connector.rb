@@ -79,7 +79,7 @@ class OnPremiseConnector
   end
 
   def powered_off_machine?(machine)
-    machine.machine_samples.exists? == false && machine.status == Machine::STATUS_POWERED_OFF
+    machine.status == Machine::STATUS_POWERED_OFF
   end
 
   def obtain_last_samples

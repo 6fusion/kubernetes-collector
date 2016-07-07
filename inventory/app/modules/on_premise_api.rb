@@ -3,11 +3,12 @@
 module OnPremiseApi
   def request_api(endpoint, method, config, parameters = nil)
     begin
+      token_param = config.on_premise[:token].empty? ? '' : "?access_token=#{config.on_premise[:token]}"
       if method == :get
-        response = RestClient::Request.execute(url: "#{config.on_premise[:url]}/#{endpoint}", method: method,
+        response = RestClient::Request.execute(url: "#{config.on_premise[:url]}/#{endpoint}#{token_param}", method: method,
                                payload: parameters.to_json, accept: :json, content_type: :json)
       else
-        response = RestClient.send(method, "#{config.on_premise[:url]}/#{endpoint}", parameters.to_json, accept: :json, content_type: :json)
+        response = RestClient.send(method, "#{config.on_premise[:url]}/#{endpoint}#{token_param}", parameters.to_json, accept: :json, content_type: :json)
       end
       JSON.parse(response.body)
     rescue Exception => e

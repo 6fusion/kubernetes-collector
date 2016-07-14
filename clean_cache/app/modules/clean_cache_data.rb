@@ -1,11 +1,11 @@
 # This class is responsible for cleaning data from the MongoDB cache older than
 # the value set by DATA_AGE_PERIOD
 module CleanCacheData
-  def remove_old_data(logger)
+  def remove_old_data(config, logger)
     reset_statistics
 
     current_time = Time.now.utc
-    @age_time = current_time - DATA_AGE_PERIOD
+    @age_time = current_time - config.on_premise[:data_age_period]
 
     logger.info "Cleaning data older than #{@age_time} from the cache db..."
     remove_old_samples

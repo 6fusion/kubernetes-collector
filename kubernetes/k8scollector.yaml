@@ -38,6 +38,7 @@ data:
   token: "BASE64_VALUE"            # Token to access the 6fusion On Premise API server (leave the empty string if no token is to be used)
   use-ssl: "BASE64_VALUE"          # Use 1 for true and 0 for false
   verify-ssl: "BASE64_VALUE"       # Use 1 for true and 0 for false
+  data-age-period: "BASE64_VALUE"  # Age period of data for clean cache. Must be in minutes
   organization-id: "BASE64_VALUE"  # Organization ID of the one already created in the 6fusion On Premise API server
 ---
 apiVersion: v1
@@ -79,6 +80,9 @@ spec:
       mountPath: /var/run/secrets/k8scollector/on-premise
   - name: k8scollector-cleancache
     image: 6fusion/k8collector-cleancache # Docker image of the 6fusion Kubernetes Clean Cache db
+    volumeMounts:
+    - name: on-premise-secret
+      mountPath: /var/run/secrets/k8scollector/on-premise
   - name: k8scollector-mongodb
     image: mongo:3.2
     volumeMounts:
@@ -126,3 +130,4 @@ spec:
           secretName: kube-secret
       imagePullSecrets:
         - name: registry-pull-secret
+        

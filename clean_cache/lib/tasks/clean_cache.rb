@@ -9,12 +9,15 @@ begin
   # Initialize MongoDB connection
   CleanCache::init_mongodb(logger)
 
+  # Load configuration values
+  config = CleanCache::load_configuration(logger)
+
   # Define the clean cache db scheduled job    
   handler do |job|
     if job.eql?('clean-cache.connect')
       begin
         # Initialize Clean Cache db
-        remove_old_data(logger)
+        remove_old_data(config, logger)
         logger.info 'Clean cache db finished successfully...'
       rescue Exception => e
         logger.error e

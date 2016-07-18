@@ -40,7 +40,11 @@ class InventoryCollector
                                              organization_id: @config.on_premise[:organization_id],
                                              tags: %w(kubernetes-collector))
     end
-    # Clear host information so we can refresh it
+    # Clear infrastructure networks information so we can refresh it
+    infrastructure.networks.destroy_all
+    infrastructure_network = infrastructure.networks.new(name: "network_#{infrastructure_name}", kind: 'LAN', speed_bits_per_second: 0)
+    network_speeds = []
+    # Clear infrastructure hosts information so we can refresh it
     infrastructure.hosts.each do |host|
       host.host_cpus.destroy_all
       host.host_nics.destroy_all
@@ -53,14 +57,20 @@ class InventoryCollector
       node_ip = node['status']['addresses'][0]['address']
       begin
         node_attributes = CAdvisorAPI::request(@config, node_ip, 'attributes')
-        host = infrastructure.hosts.create(ip_address: node_ip, memory_bytes: node_attributes['memory_capacity'], infrastructure: infrastructure)
+        host = infrastructure.hosts.create(ip_address: node_ip, memory_bytes: node_attributes['memory_capacity'])
         host.host_cpus.create(cores: node_attributes['num_cores'], speed_hz: node_attributes['cpu_frequency_khz'] * 1000)
         node_attributes['filesystems'].each {|fs| host.host_disks.create(name: fs['device'].split('/').last, storage_bytes: fs['capacity'])}
-        node_attributes['network_devices'].each {|nd| host.host_nics.create(name: nd['name'])}
+        node_attributes['network_devices'].each do |nd|
+          nd_speed = nd['speed'].to_i * 10**6
+          host.host_nics.create(name: nd['name'], speed_bits_per_second: nd_speed)
+          network_speeds << nd_speed
+        end
       rescue Exception
         @logger.warn "Could not collect attributes from host #{node_ip}. CAdvisor is not enabled. Skipping..."
       end
     end
+    infrastructure_network.speed_bits_per_second = network_speeds.min
+    infrastructure_network.save!
     # Look for the remote_id of the infrastructure (if it exists on the on-prem db)
     OnPremiseApi::request_api('infrastructures', :get, @config, {organization_id: infrastructure.organization_id})['embedded']['infrastructures'].each do |i|
       if infrastructure.name.eql? i['name']
@@ -280,6 +290,7 @@ class InventoryCollector
     HostDisk.destroy_all
     HostCpu.destroy_all
     Host.destroy_all
+    Network.destroy_all
     Infrastructure.destroy_all
     raise Mongoid::Errors::DocumentNotFound
   end

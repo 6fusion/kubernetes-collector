@@ -9,12 +9,14 @@ class Infrastructure
 
   validates :organization_id, :name, :tags, presence: true
 
+  has_many :networks
   has_many :hosts
   has_many :pods
 
   def to_payload
     { name: self.name,
       tags: self.tags,
+      networks: self.networks.all.map {|network| network.to_payload},
       hosts: self.hosts.all.map {|host| host.to_payload} }
   end
 end

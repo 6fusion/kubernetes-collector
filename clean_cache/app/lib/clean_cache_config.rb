@@ -14,6 +14,6 @@ class CleanCacheConfig
   private
 
   def readfile_int(filepath)
-    File.exist?(filepath) ? File.read(filepath).to_i : 20
+    File.exist?(filepath) ? File.read(filepath).to_i : DATA_AGE_PERIOD_DEFAULT
   end
 end

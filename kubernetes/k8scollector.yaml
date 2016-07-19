@@ -130,4 +130,3 @@ spec:
           secretName: kube-secret
       imagePullSecrets:
         - name: registry-pull-secret
-        

@@ -6,7 +6,7 @@ class HostNic
   field :network_name,          type: String
   field :speed_bits_per_second, type: Integer
 
-  validates :name, presence: true
+  validates :name, :speed_bits_per_second, presence: true
 
   belongs_to :host
 

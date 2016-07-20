@@ -1,0 +1,55 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activemodel (4.2.6)
+      activesupport (= 4.2.6)
+      builder (~> 3.1)
+    activesupport (4.2.6)
+      i18n (~> 0.7)
+      json (~> 1.7, >= 1.7.7)
+      minitest (~> 5.1)
+      thread_safe (~> 0.3, >= 0.3.4)
+      tzinfo (~> 1.1)
+    bson (4.1.1)
+    builder (3.2.2)
+    clockwork (2.0.0)
+      activesupport
+      tzinfo
+    domain_name (0.5.20160615)
+      unf (>= 0.0.5, < 1.0.0)
+    http-cookie (1.0.2)
+      domain_name (~> 0.5)
+    i18n (0.7.0)
+    json (1.8.3)
+    mime-types (2.99.2)
+    minitest (5.9.0)
+    mongo (2.2.5)
+      bson (~> 4.0)
+    mongoid (5.1.2)
+      activemodel (~> 4.0)
+      mongo (~> 2.1)
+      origin (~> 2.2)
+      tzinfo (>= 0.3.37)
+    netrc (0.11.0)
+    origin (2.2.0)
+    rest-client (1.8.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 3.0)
+      netrc (~> 0.7)
+    thread_safe (0.3.5)
+    tzinfo (1.2.2)
+      thread_safe (~> 0.1)
+    unf (0.1.4)
+      unf_ext
+    unf_ext (0.0.7.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  clockwork (= 2.0)
+  mongoid (= 5.1.2)
+  rest-client (= 1.8)
+
+BUNDLED WITH
+   1.10.5

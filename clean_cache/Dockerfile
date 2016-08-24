@@ -21,14 +21,16 @@ RUN \
   rm -rf /var/cache/apk/*
 
 WORKDIR  $APPDIR
-COPY . $APPDIR
+COPY Gemfile $APPDIR
+COPY Gemfile.lock $APPDIR
 
 RUN \
 # Install the gems required by the application
   bundle install --without test && \
 # Remove unnecessary files/folders
   rm -rf .git .gitignore
-
+  
+COPY . $APPDIR
 # Add the entrypoint script
 ADD docker/apps/clean_cache/clean_cache-entrypoint.sh /
 # Give execution permissions to all scripts

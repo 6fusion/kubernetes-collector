@@ -5,22 +5,27 @@ class Machine
   STATUS_POWERED_OFF = 'poweredOff'
   STATUS_POWERED_ON  = 'poweredOn'
   STATUS_PAUSED      = 'paused'
-
-  field :remote_id,    type: String
-  field :name,         type: String
-  field :virtual_name, type: String
-  field :cpu_count,    type: Integer
-  field :cpu_speed_hz, type: Integer
-  field :memory_bytes, type: Integer
-  field :tags,         type: Array
-  field :status,       type: String
+  
+  field :custom_id,           type: String
+  field :remote_id,           type: String
+  field :name,                type: String
+  field :virtual_name,        type: String
+  field :cpu_count,           type: Integer
+  field :cpu_speed_hz,        type: Integer
+  field :memory_bytes,        type: Integer
+  field :tags,                type: Array
+  field :status,              type: String
   field :metering_status,     type: String  # PENDING,METERING,METERED
   field :last_metering_start, type: DateTime
   field :host_ip_address,     type: String
   field :locked,              type: Boolean
   field :locked_by,           type: String
+  field :container_name,      type: String
+  field :pod_id,              type: String
+  field :is_pod_container,    type: Boolean
 
-  validates :name, :virtual_name, :status, :tags, presence: true
+
+  validates :name, :virtual_name, :status, :host_ip_address, :tags, presence: true
   validates :cpu_count,
             :cpu_speed_hz,
             :memory_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }
@@ -30,8 +35,11 @@ class Machine
   has_many :machine_samples
   belongs_to :pod
 
+  before_save :split_container_name, on: [ :create, :update ]
+
   def to_payload
-    { name: self.name,
+    { custom_id: self.custom_id,
+      name: self.name,
       virtual_name: self.virtual_name,
       cpu_count: self.cpu_count,
       cpu_speed_hz: self.cpu_speed_hz,
@@ -64,4 +72,14 @@ class Machine
   def obtain_average(machine_samples, attribute, count)
     machine_samples.inject(0.0) { |sum, sample| sum + sample.send(attribute) } / count
   end
+
+  protected
+
+  def split_container_name
+    self.pod_id = self.container_name.split("_")[4] || nil 
+    self.is_pod_container = self.container_name.split("_")[1].split(".")[0] == "POD"
+
+    true
+  end
+
 end

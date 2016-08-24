@@ -39,14 +39,16 @@ class MetricsCollector
           end unless sample['memory'].empty?
           machine_sample.save!
 
+          disk_sample = machine.disks.first.disk_samples.new(reading_at: sample['timestamp'])
           if sample['has_diskio']
-            disk_sample = machine.disks.first.disk_samples.new(reading_at: sample['timestamp'])
             disk_sample.reading_at = sample['timestamp']
-            disk_sample.usage_bytes = 1024
             disk_sample.read_kilobytes = (sample['diskio']['io_service_bytes'][0]['stats']['Read'] - previous_sample['diskio_bytes_read']).abs / 1024
             disk_sample.write_kilobytes = (sample['diskio']['io_service_bytes'][0]['stats']['Write'] - previous_sample['diskio_bytes_write']).abs / 1024
-            disk_sample.save!
           end unless sample['diskio'].empty?
+          if sample["has_filesystem"]
+            disk_sample.usage_bytes = sample["filesystem"][0]["usage"]
+          end unless sample["filesystem"].empty?
+          disk_sample.save!
 
           if sample['has_network']
             nic_sample = machine.nics.first.nic_samples.new(reading_at: sample['timestamp'])
@@ -78,6 +80,7 @@ class MetricsCollector
           previous_sample['network_bytes_transmit'] = sample['network']['interfaces'][0]['tx_bytes']
         end unless sample['network'].empty?
       end if samples
+      
       machine.locked = false
       machine.locked_by = ''
       machine.metering_status = 'METERED'

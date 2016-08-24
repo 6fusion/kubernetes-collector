@@ -4,9 +4,9 @@ class DiskSample
   include Mongoid::Document
 
   field :reading_at,        type: DateTime
-  field :usage_bytes,       type: Integer
-  field :read_kilobytes,    type: Integer
-  field :write_kilobytes,   type: Integer
+  field :usage_bytes,       type: Integer, default: 0
+  field :read_kilobytes,    type: Integer, default: 0
+  field :write_kilobytes,   type: Integer, default: 0
 
   validates :reading_at,      presence: true
   validates :usage_bytes,

@@ -112,6 +112,7 @@ class InventoryCollector
         machine.memory_bytes = v["memory"]["limit"] < host_attributes["memory_capacity"] ? v["memory"]["limit"] : host_attributes["memory_capacity"]
         machine.remote_id = get_machine_remote_id(machine, on_prem_machines)
         machine.save!
+        @logger.info "Updated #{machine.name} machine sucessfully."
 
         @data[:running_machines_vnames] << machine.virtual_name
 
@@ -153,9 +154,9 @@ class InventoryCollector
     if machine
       # Set and save machine basic attributes
       machine.name = "pod-#{machine.pod_id}"
-      machine.status = pod["status"]["phase"]
       machine.tags = machine.tags + ["pod:#{pod['metadata']['name']}"]
       machine.save!
+      @logger.info "Updated #{machine.name} machine sucessfully."
     end
 
     pod['status']['containerStatuses'].each do |container|
@@ -172,6 +173,7 @@ class InventoryCollector
         machine.tags = machine.tags + ["pod:#{pod['metadata']['name']}"]
         machine.pod = pod['db_object']
         machine.save!
+        @logger.info "Updated #{machine.name} machine sucessfully."
       end
     end
   end

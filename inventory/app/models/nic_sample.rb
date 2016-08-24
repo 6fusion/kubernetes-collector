@@ -3,8 +3,8 @@ class NicSample
   include Mongoid::Document
 
   field :reading_at,        type: DateTime
-  field :transmit_kilobits, type: Integer
-  field :receive_kilobits,  type: Integer
+  field :transmit_kilobits, type: Integer, default: 0
+  field :receive_kilobits,  type: Integer, default: 0
 
   validates :reading_at,        presence: true
   validates :transmit_kilobits,

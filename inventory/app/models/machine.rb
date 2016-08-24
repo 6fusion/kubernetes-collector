@@ -2,6 +2,10 @@
 class Machine
   include Mongoid::Document
 
+  STATUS_POWERED_OFF = 'poweredOff'
+  STATUS_POWERED_ON  = 'poweredOn'
+  STATUS_PAUSED      = 'paused'
+  
   field :custom_id,           type: String
   field :remote_id,           type: String
   field :name,                type: String

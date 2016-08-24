@@ -2,6 +2,11 @@
 class Machine
   include Mongoid::Document
 
+  STATUS_POWERED_OFF = 'poweredOff'
+  STATUS_POWERED_ON  = 'poweredOn'
+  STATUS_PAUSED      = 'paused'
+  
+  field :custom_id,           type: String
   field :remote_id,           type: String
   field :name,                type: String
   field :virtual_name,        type: String
@@ -15,6 +20,10 @@ class Machine
   field :host_ip_address,     type: String
   field :locked,              type: Boolean
   field :locked_by,           type: String
+  field :container_name,      type: String
+  field :pod_id,              type: String
+  field :is_pod_container,    type: Boolean
+
 
   validates :name, :virtual_name, :status, :host_ip_address, :tags, presence: true
   validates :cpu_count,
@@ -26,8 +35,11 @@ class Machine
   has_many :machine_samples
   belongs_to :pod
 
+  before_save :split_container_name, on: [ :create, :update ]
+
   def to_payload
-    { name: self.name,
+    { custom_id: self.custom_id,
+      name: self.name,
       virtual_name: self.virtual_name,
       cpu_count: self.cpu_count,
       cpu_speed_hz: self.cpu_speed_hz,
@@ -60,4 +72,14 @@ class Machine
   def obtain_average(machine_samples, attribute, count)
     machine_samples.inject(0.0) { |sum, sample| sum + sample.send(attribute) } / count
   end
+
+  protected
+
+  def split_container_name
+    self.pod_id = self.container_name.split("_")[4] || nil 
+    self.is_pod_container = self.container_name.split("_")[1].split(".")[0] == "POD"
+
+    true
+  end
+
 end

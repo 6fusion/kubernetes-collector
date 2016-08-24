@@ -267,7 +267,7 @@ class InventoryCollector
 
   def poweroff_dead_machines
     @logger.info 'Powering off dead machines...'
-    Machine.where(:virtual_name.nin => @data[:running_machines_vnames]).update_all(status: 'poweredOff')
+    Machine.where(:virtual_name.nin => @data[:running_machines_vnames]).update_all(status: 'terminated')
   end
 
   def reset_machines_metering_status

@@ -4,8 +4,8 @@ class MachineSample
   include Mongoid::Document
 
   field :reading_at,        type: DateTime
-  field :cpu_usage_percent, type: Integer
-  field :memory_bytes,      type: Integer
+  field :cpu_usage_percent, type: Integer, default: 0
+  field :memory_bytes,      type: Integer, default: 0
 
   validates :reading_at,      presence: true
   validates :cpu_usage_percent,

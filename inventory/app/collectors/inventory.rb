@@ -88,24 +88,31 @@ class InventoryCollector
     on_prem_nics = collect_machine_resources('nics')
     infrastructure.hosts.each do |host|
       @logger.info "Collecting machines for host #{host.ip_address}..."
-      response = CAdvisorAPI::request(@config, host.ip_address, 'stats/?type=docker&recursive=true&count=1')
+      response = CAdvisorAPI::request(@config, host.ip_address, 'spec/?type=docker&recursive=true')
       response.each do |k,v|
-        container_id = k.split('/').last.split('docker-').last.split('.scope').first
+
+        # Parse aliases
+        container_name = v["aliases"][0]
+        container_id = v["aliases"][1]
+        
         # Is this a new or an existing machine?
         begin
           machine = Machine.find_by(virtual_name: container_id)
         rescue Mongoid::Errors::DocumentNotFound
           machine = Machine.new(virtual_name: container_id, name: "#{CONTAINER_NAME_PREFIX}#{container_id[0...8]}")  # The container name might be updated later if this container is attached to a pod
         end
+        machine.custom_id = container_id
+        machine.container_name = container_name
         machine.status = 'poweredOn'  # Containers retrieved through cAdvisor are running by default
         machine.tags = ['type:container', 'platform:kubernetes']
         host_attributes = CAdvisorAPI::request(@config, host.ip_address, 'attributes')
         machine.host_ip_address = host.ip_address
-        machine.cpu_count = host_attributes['num_cores']
+        machine.cpu_count = v["cpu"]["limit"]
         machine.cpu_speed_hz = host_attributes['cpu_frequency_khz'] * 1000
-        machine.memory_bytes = host_attributes['memory_capacity']
+        machine.memory_bytes = v["memory"]["limit"] < host_attributes["memory_capacity"] ? v["memory"]["limit"] : host_attributes["memory_capacity"]
         machine.remote_id = get_machine_remote_id(machine, on_prem_machines)
         machine.save!
+        @logger.info "Updated #{machine.name} machine sucessfully."
 
         @data[:running_machines_vnames] << machine.virtual_name
 
@@ -136,22 +143,37 @@ class InventoryCollector
 
   def update_pod_machines(pod)
     @logger.info "Updating machines for pod=#{pod['metadata']['name']}..."
-    if pod['status']['phase'] == 'Running'
-      pod['status']['containerStatuses'].each do |container|
-        if container['ready']
-          container_id = container['containerID'].split("//").last
-          # Look for this machine in the cache db
-          begin
-            machine = Machine.find_by(virtual_name: container_id)
-          rescue Mongoid::Errors::DocumentNotFound
-            next
-          end
-          machine.name = "#{container['name']}-#{container_id[0...8]}"
-          machine.status = 'poweredOn'
-          machine.tags = machine.tags + ["pod:#{pod['metadata']['name']}"]
-          machine.pod = pod['db_object']
-          machine.save!
+    
+    # Find the infrastructure container for the pod
+    begin
+      machine = Machine.find_by(pod_id: pod['metadata']['uid'], is_pod_container: true)
+    rescue Mongoid::Errors::DocumentNotFound
+      machine = Machine.find_by(pod_id: pod['metadata']['annotations']['kubernetes.io/config.hash'], is_pod_container: true)
+    end
+
+    if machine
+      # Set and save machine basic attributes
+      machine.name = "pod-#{machine.pod_id}"
+      machine.tags = machine.tags + ["pod:#{pod['metadata']['name']}"]
+      machine.save!
+      @logger.info "Updated #{machine.name} machine sucessfully."
+    end
+
+    pod['status']['containerStatuses'].each do |container|
+      if container['ready']
+        container_id = container['containerID'].split("//").last
+        # Look for this machine in the cache db
+        begin
+          machine = Machine.find_by(virtual_name: container_id)
+        rescue Mongoid::Errors::DocumentNotFound
+          next
         end
+        machine.name = "#{container['name']}-#{container_id[0...8]}"
+        machine.status = 'poweredOn'
+        machine.tags = machine.tags + ["pod:#{pod['metadata']['name']}"]
+        machine.pod = pod['db_object']
+        machine.save!
+        @logger.info "Updated #{machine.name} machine sucessfully."
       end
     end
   end
@@ -247,7 +269,7 @@ class InventoryCollector
 
   def poweroff_dead_machines
     @logger.info 'Powering off dead machines...'
-    Machine.where(:virtual_name.nin => @data[:running_machines_vnames]).update_all(status: 'poweredOff')
+    Machine.where(:virtual_name.nin => @data[:running_machines_vnames]).update_all(status: 'terminated')
   end
 
   def reset_machines_metering_status

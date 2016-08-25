@@ -148,7 +148,11 @@ class InventoryCollector
     begin
       machine = Machine.find_by(pod_id: pod['metadata']['uid'], is_pod_container: true)
     rescue Mongoid::Errors::DocumentNotFound
-      machine = Machine.find_by(pod_id: pod['metadata']['annotations']['kubernetes.io/config.hash'], is_pod_container: true)
+      begin
+        machine = Machine.find_by(pod_id: pod['metadata']['annotations']['kubernetes.io/config.hash'], is_pod_container: true)
+      rescue Mongoid::Errors::DocumentNotFound
+        @logger.info "Pod container not found for #{pod['metadata']['name']} pod."
+      end
     end
 
     if machine

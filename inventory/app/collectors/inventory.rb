@@ -146,16 +146,19 @@ class InventoryCollector
     
     # Find the infrastructure container for the pod
     begin
+      @logger.info "Searching for pod container using uid for #{pod['metadata']['name']} pod."
       machine = Machine.find_by(pod_id: pod['metadata']['uid'], is_pod_container: true)
     rescue Mongoid::Errors::DocumentNotFound
       begin
+        @logger.info "Searching for pod container using annotations for #{pod['metadata']['name']} pod."
         machine = Machine.find_by(pod_id: pod['metadata']['annotations']['kubernetes.io/config.hash'], is_pod_container: true)
       rescue Mongoid::Errors::DocumentNotFound
-        @logger.info "Pod container not found for #{pod['metadata']['name']} pod."
+        @logger.info "Pod container was not found for #{pod['metadata']['name']} pod."
       end
     end
 
     if machine
+      @logger.info "Pod container for #{pod['metadata']['name']} pod was found."
       # Set and save machine basic attributes
       machine.name = "pod-#{machine.pod_id}"
       machine.tags = machine.tags + ["pod:#{pod['metadata']['name']}"]

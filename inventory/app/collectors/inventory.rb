@@ -308,20 +308,19 @@ class InventoryCollector
   end
 
   def reset_cache_db
-    NicSample.destroy_all
-    DiskSample.destroy_all
-    MachineSample.destroy_all
-    Nic.destroy_all
-    Disk.destroy_all
-    Machine.destroy_all
-    Pod.destroy_all
-    HostNic.destroy_all
-    HostDisk.destroy_all
-    HostCpu.destroy_all
-    Host.destroy_all
-    Network.destroy_all
-    Infrastructure.destroy_all
-    raise Mongoid::Errors::DocumentNotFound
+    Disk.delete_all
+    DiskSample.delete_all
+    Host.delete_all 
+    HostCpu.delete_all
+    HostDisk.delete_all
+    HostNic.delete_all
+    Infrastructure.delete_all
+    Machine.delete_all
+    MachineSample.delete_all
+    Network.delete_all
+    Nic.delete_all
+    NicSample.delete_all
+    Pod.delete_all
   end
 
 end

@@ -107,7 +107,7 @@ class InventoryCollector
         machine.tags = ['type:container', 'platform:kubernetes']
         host_attributes = CAdvisorAPI::request(@config, host.ip_address, 'attributes')
         machine.host_ip_address = host.ip_address
-        machine.cpu_count = v["cpu"]["limit"]
+        machine.cpu_count = v["cpu"]["limit"] < host_attributes["num_cores"] ? v["cpu"]["limit"] : host_attributes["num_cores"]
         machine.cpu_speed_hz = host_attributes['cpu_frequency_khz'] * 1000
         machine.memory_bytes = v["memory"]["limit"] < host_attributes["memory_capacity"] ? v["memory"]["limit"] : host_attributes["memory_capacity"]
         machine.remote_id = get_machine_remote_id(machine, on_prem_machines)
@@ -276,7 +276,7 @@ class InventoryCollector
 
   def poweroff_dead_machines
     @logger.info 'Powering off dead machines...'
-    Machine.where(:virtual_name.nin => @data[:running_machines_vnames]).update_all(status: 'terminated')
+    Machine.where(:virtual_name.nin => @data[:running_machines_vnames]).update_all(status: 'deleted')
   end
 
   def reset_machines_metering_status

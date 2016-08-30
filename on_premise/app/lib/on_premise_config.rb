@@ -16,10 +16,10 @@ class OnPremiseConfig
     raise "On Premise API host is not present in the on-premise-secret" if on_premise_host.empty?
     on_premise_port = readfile("#{SECRETS_DIR}/on-premise/port")
     raise "On Premise API port is not present in the on-premise-secret" if on_premise_port.empty?
-    on_premise_protocol = readfile_int("#{SECRETS_DIR}/on-premise/use-ssl") ? 'https' : 'http'
+    on_premise_protocol = readfile("#{SECRETS_DIR}/on-premise/use-ssl") ? 'https' : 'http'
     @on_premise[:url] = "#{on_premise_protocol}://#{on_premise_host}:#{on_premise_port}/api/#{ONPREMISE_API_VERSION}"
     @on_premise[:token] = readfile("#{SECRETS_DIR}/on-premise/token")
-    @on_premise[:verify_ssl] = readfile_int("#{SECRETS_DIR}/on-premise/verify-ssl")
+    @on_premise[:verify_ssl] = readfile("#{SECRETS_DIR}/on-premise/verify-ssl")
     @on_premise[:organization_id] = readfile("#{SECRETS_DIR}/on-premise/organization-id")
   end
 

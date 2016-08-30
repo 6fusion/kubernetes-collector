@@ -27,8 +27,8 @@ class InventoryConfig
     raise "Kubernetes port is not present in the kube-secret" if kube_port.empty?
     kube_token = readfile("#{SECRETS_DIR}/kube/kube-token")
     kube_token = readfile(KUBE_TOKEN_LOCATION) if kube_token.empty? && File.exist?(KUBE_TOKEN_LOCATION)
-    @kube[:verify_ssl] = readfile_int("#{SECRETS_DIR}/kube/kube-verify-ssl")
-    kube_use_ssl =  readfile_int("#{SECRETS_DIR}/kube/kube-use-ssl")
+    @kube[:verify_ssl] = readfile("#{SECRETS_DIR}/kube/kube-verify-ssl")
+    kube_use_ssl =  readfile("#{SECRETS_DIR}/kube/kube-use-ssl")
     kube_protocol = kube_use_ssl ? 'https' : 'http'
     @kube[:host] = kube_host
     @kube[:url] = "#{kube_protocol}://#{kube_host}:#{kube_port}/api/#{KUBE_API_VERSION}"
@@ -49,10 +49,10 @@ class InventoryConfig
     raise "On Premise API host is not present in the on-premise-secret" if on_premise_host.empty?
     on_premise_port = readfile("#{SECRETS_DIR}/on-premise/port")
     raise "On Premise API port is not present in the on-premise-secret" if on_premise_port.empty?
-    on_premise_protocol = readfile_int("#{SECRETS_DIR}/on-premise/use-ssl") ? 'https' : 'http'
+    on_premise_protocol = readfile("#{SECRETS_DIR}/on-premise/use-ssl") ? 'https' : 'http'
     @on_premise[:url] = "#{on_premise_protocol}://#{on_premise_host}:#{on_premise_port}/api/#{ONPREMISE_API_VERSION}"
     @on_premise[:token] = readfile("#{SECRETS_DIR}/on-premise/token")
-    @on_premise[:verify_ssl] = readfile_int("#{SECRETS_DIR}/on-premise/verify-ssl")
+    @on_premise[:verify_ssl] = readfile("#{SECRETS_DIR}/on-premise/verify-ssl")
     @on_premise[:organization_id] = readfile("#{SECRETS_DIR}/on-premise/organization-id")
   end
 

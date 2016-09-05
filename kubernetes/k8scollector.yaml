@@ -54,48 +54,55 @@ spec:
   type: NodePort
 ---
 apiVersion: v1
-kind: Pod
+kind: ReplicationController
 metadata:
   name: 6fusion-k8scollector-master
   namespace: 6fusion-kubernetes-collector
   labels:
     6fusion-app: k8scollector-master
 spec:
-  containers:
-  - name: k8scollector-inventory
-    image: 6fusion/k8collector-inventory # Docker image of the 6fusion Kubernetes Inventory Collector
-    volumeMounts:
-    - name: kube-secret
-      mountPath: /var/run/secrets/k8scollector/kube
-    - name: on-premise-secret
-      mountPath: /var/run/secrets/k8scollector/on-premise
-  - name: k8scollector-onpremise
-    image: 6fusion/k8collector-onpremise # Docker image of the 6fusion Kubernetes On-Premise Connector
-    volumeMounts:
-    - name: on-premise-secret
-      mountPath: /var/run/secrets/k8scollector/on-premise
-  - name: k8scollector-cleancache
-    image: 6fusion/k8collector-cleancache # Docker image of the 6fusion Kubernetes Clean Cache db
-    volumeMounts:
-    - name: on-premise-secret
-      mountPath: /var/run/secrets/k8scollector/on-premise
-  - name: k8scollector-mongodb
-    image: mongo:3.2
-    volumeMounts:
-    - mountPath: /data/db
-      name: "k8scollector-mongodb"
-  volumes:
-  - name: kube-secret
-    secret:
-      secretName: kube-secret
-  - name: on-premise-secret
-    secret:
-      secretName: on-premise-secret
-  - name: "k8scollector-mongodb"
-    hostPath:
-      path: "/var/lib/k8scollector/data/db"
-  imagePullSecrets:
-    - name: registry-pull-secret
+  replicas: 1
+  selector:
+    6fusion-app: k8scollector-master
+  template:
+    metadata:
+      name: 6fusion-k8scollector-master
+      labels:
+        6fusion-app: k8scollector-master
+    spec:
+      containers:
+      - name: k8scollector-inventory
+        image: 6fusion/k8collector-inventory # Docker image of the 6fusion Kubernetes Inventory Collector
+        volumeMounts:
+        - name: kube-secret
+          mountPath: /var/run/secrets/k8scollector/kube
+        - name: on-premise-secret
+          mountPath: /var/run/secrets/k8scollector/on-premise
+      - name: k8scollector-onpremise
+        image: 6fusion/k8collector-onpremise # Docker image of the 6fusion Kubernetes On-Premise Connector
+        volumeMounts:
+        - name: on-premise-secret
+          mountPath: /var/run/secrets/k8scollector/on-premise
+      - name: k8scollector-cleancache
+        image: 6fusion/k8collector-cleancache # Docker image of the 6fusion Kubernetes Clean Cache db
+        volumeMounts:
+        - name: on-premise-secret
+          mountPath: /var/run/secrets/k8scollector/on-premise
+      - name: k8scollector-mongodb
+        image: mongo:3.2
+        volumeMounts:
+        - mountPath: /data/db
+          name: "k8scollector-mongodb"
+      volumes:
+      - name: kube-secret
+        secret:
+          secretName: kube-secret
+      - name: on-premise-secret
+        secret:
+          secretName: on-premise-secret
+      - name: "k8scollector-mongodb"
+        hostPath:
+          path: "/var/lib/k8scollector/data/db"
 ---
 apiVersion: v1
 kind: ReplicationController

@@ -24,7 +24,7 @@ module Inventory
       # Verify that the Organization exists in the On Premise API. Otherwise, raise an exception.
       token_param = config.on_premise[:token].empty? ? '' : "?access_token=#{config.on_premise[:token]}"
       endpoint = "organizations/#{config.on_premise[:organization_id]}"
-      response = RestClient::Request.execute(url: "#{config.on_premise[:url]}/#{endpoint}#{token_param}", method: :get, accept: :json, content_type: :json)
+      response = RestClient::Request.execute(url: "#{config.on_premise[:url]}/#{endpoint}#{token_param}", method: :get, accept: :json, content_type: :json, verify_ssl: config.on_premise[:verify_ssl])
     rescue Exception => e
       logger.error "Could not verify the organization with ID=#{config.on_premise[:organization_id]}"
       raise Exceptions::CollectorException, e.message

@@ -114,7 +114,7 @@ class OnPremiseConnector
         sync_disks(machine)
         sync_nics(machine)
       rescue StandardError => e
-        message = e.response ? JSON.parse(e.response)['message'] : e
+        message = e.is_a?(RestClient::Exception) ? e.response : e
         raise Exceptions::OnPremiseException, message
       end
     end
@@ -126,7 +126,7 @@ class OnPremiseConnector
       begin
         machine.remote_id ? update_machine(machine) : create_machine(machine)
       rescue StandardError => e
-        message = e.response ? JSON.parse(e.response)['message'] : e
+        message = e.is_a?(RestClient::Exception) ? e.response : e
         raise Exceptions::OnPremiseException, message
       end
     end
@@ -139,7 +139,7 @@ class OnPremiseConnector
       begin
         disk.remote_id ? update_disk(disk) : create_disk(disk)
       rescue StandardError => e
-        message = e.response ? JSON.parse(e.response)['message'] : e
+        message = e.is_a?(RestClient::Exception) ? e.response : e
         raise Exceptions::OnPremiseException, message
       end
     end
@@ -152,7 +152,7 @@ class OnPremiseConnector
       begin
         nic.remote_id ? update_nic(nic) : create_nic(nic)
       rescue StandardError => e
-        message = e.response ? JSON.parse(e.response)['message'] : e
+        message = e.is_a?(RestClient::Exception) ? e.response : e
         raise Exceptions::OnPremiseException, message
       end
     end
@@ -164,7 +164,7 @@ class OnPremiseConnector
       begin
         create_samples(machine)
       rescue StandardError => e
-        message = e.response ? JSON.parse(e.response)['message'] : e
+        message = e.is_a?(RestClient::Exception) ? e.response : e
         raise Exceptions::OnPremiseException, message
       end
     end
@@ -176,6 +176,7 @@ class OnPremiseConnector
     response = request_api(endpoint, @method[:post], @config, payload)
     update_remote_id(infrastructure, response)
     @logger.info "Creating infrastructure #{infrastructure.name} completed successfully."
+    @logger.debug(payload)
   end
 
   def update_infrastructure(infrastructure)
@@ -183,6 +184,7 @@ class OnPremiseConnector
     payload = infrastructure.to_payload
     request_api(endpoint, @method[:put], @config, payload)
     @logger.info "Updating infrastructure #{infrastructure.name} completed successfully."
+    @logger.debug(payload)
   end
 
   def create_machine(machine)

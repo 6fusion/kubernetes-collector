@@ -36,10 +36,12 @@ class InventoryCollector
       # delete everything and start from scratch
       reset_cache_db if infrastructure.organization_id != @config.on_premise[:organization_id]
     rescue Mongoid::Errors::DocumentNotFound
-      infrastructure = Infrastructure.create(name: infrastructure_name,
-                                             organization_id: @config.on_premise[:organization_id],
-                                             tags: %w(kubernetes-collector))
+      infrastructure = Infrastructure.new(name: infrastructure_name,
+                                          organization_id: @config.on_premise[:organization_id])
     end
+    infrastructure.tags = ['platform:kubernetes', 'collector:kubernetes']
+    infrastructure.save! # Need to save here to avoid child saving before parent issue
+
     # Clear infrastructure networks information so we can refresh it
     infrastructure.networks.destroy_all
     infrastructure_network = infrastructure.networks.new(name: "network_#{infrastructure_name}", kind: 'LAN', speed_bits_per_second: 0)
@@ -65,12 +67,14 @@ class InventoryCollector
           host.host_nics.create(name: nd['name'], speed_bits_per_second: nd_speed)
           network_speeds << nd_speed
         end
-      rescue Exception
+      rescue Exception => e
         @logger.warn "Could not collect attributes from host #{node_ip}. CAdvisor is not enabled. Skipping..."
+        @logger.error e.message
       end
     end
     infrastructure_network.speed_bits_per_second = network_speeds.min
     infrastructure_network.save!
+
     # Look for the remote_id of the infrastructure (if it exists on the on-prem db)
     OnPremiseApi::request_api('infrastructures', :get, @config, {organization_id: infrastructure.organization_id})['embedded']['infrastructures'].each do |i|
       if infrastructure.name.eql? i['name']
@@ -78,6 +82,7 @@ class InventoryCollector
         break
       end
     end
+    @logger.debug("Saving infrastructure : #{infrastructure.inspect}")
     infrastructure.save!
     infrastructure.reload
     infrastructure
@@ -91,10 +96,14 @@ class InventoryCollector
       response = CAdvisorAPI::request(@config, host.ip_address, 'spec/?type=docker&recursive=true')
       response.each do |k,v|
 
+        # If container name label is not found, skip, since this is not a kubernetes container
+        next unless v["labels"]
+        next unless v["labels"]["io.kubernetes.container.name"]
+
         # Parse aliases
         container_name = v["aliases"][0]
         container_id = v["aliases"][1]
-        
+
         # Is this a new or an existing machine?
         begin
           machine = Machine.find_by(virtual_name: container_id)
@@ -104,7 +113,7 @@ class InventoryCollector
         machine.custom_id = container_id
         machine.container_name = container_name
         machine.status = 'poweredOn'  # Containers retrieved through cAdvisor are running by default
-        machine.tags = ['type:container', 'platform:kubernetes']
+        machine.tags = ['platform:kubernetes', 'type:container']
         host_attributes = CAdvisorAPI::request(@config, host.ip_address, 'attributes')
         machine.host_ip_address = host.ip_address
         machine.cpu_count = v["cpu"]["limit"] < host_attributes["num_cores"] ? v["cpu"]["limit"] : host_attributes["num_cores"]
@@ -143,7 +152,7 @@ class InventoryCollector
 
   def update_pod_machines(pod)
     @logger.info "Updating machines for pod=#{pod['metadata']['name']}..."
-    
+
     # Find the infrastructure container for the pod
     begin
       @logger.info "Searching for pod container using uid for #{pod['metadata']['name']} pod."
@@ -195,6 +204,7 @@ class InventoryCollector
       service['spec']['selector'].each {|k, v| label_selector << "#{k}=#{v},"}
       label_selector = label_selector.to_s.chop  # Remove the last comma from the label selector
       service_pods_response = KubeAPI::request(@config, "pods?labelSelector=#{label_selector}")
+      next if service_pods_response['items'].nil?
       service_pods_response['items'].each do |service_pod|
         Pod.in(name: service_pod['metadata']['name']).each do |pod|
           pod.machines.update(tags: ['type:container', 'platform:kubernetes', "pod:#{service_pod['metadata']['name']}", "service:#{service_pod['metadata']['name']}"])
@@ -310,7 +320,7 @@ class InventoryCollector
   def reset_cache_db
     Disk.delete_all
     DiskSample.delete_all
-    Host.delete_all 
+    Host.delete_all
     HostCpu.delete_all
     HostDisk.delete_all
     HostNic.delete_all

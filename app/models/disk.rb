@@ -5,6 +5,7 @@ class Disk
   field :remote_id,     type: String
   field :name,          type: String
   field :storage_bytes, type: Integer
+  field :status,        type: String
 
   validates :name,          presence: true
   validates :storage_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }

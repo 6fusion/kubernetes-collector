@@ -13,19 +13,23 @@ class Machine
   field :cpu_count,           type: Integer
   field :cpu_speed_hz,        type: Integer
   field :memory_bytes,        type: Integer
-  field :tags,                type: Array
+  field :tags,                type: Set,    default: ['type:container', 'platform:Kubernetes']
   field :status,              type: String
   field :metering_status,     type: String  # PENDING,METERING,METERED
   field :last_metering_start, type: DateTime
-  field :host_ip_address,     type: String
+  field :host_ip,             type: String
   field :locked,              type: Boolean
   field :locked_by,           type: String
   field :container_name,      type: String
   field :pod_id,              type: String
+  field :pod_name,            type: String
   field :is_pod_container,    type: Boolean
+  field :pod_uid,             type: String
+  field :pod_ip,              type: String
+  field :namespace,           type: String
 
 
-  validates :name, :virtual_name, :status, :host_ip_address, :tags, presence: true
+  validates :name, :status, :tags, presence: true
   validates :cpu_count,
             :cpu_speed_hz,
             :memory_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }
@@ -35,7 +39,7 @@ class Machine
   has_many :machine_samples
   belongs_to :pod
 
-  before_save :split_container_name, on: [ :create, :update ]
+  # before_save :split_container_name, on: [ :create, :update ]
 
   def to_payload
     { custom_id: self.custom_id,
@@ -75,11 +79,11 @@ class Machine
 
   protected
 
-  def split_container_name
-    self.pod_id = self.container_name.split("_")[4] || nil 
-    self.is_pod_container = self.container_name.split("_")[1].split(".")[0] == "POD"
+  # def split_container_name
+  #   self.pod_id = self.container_name.split("_")[4] || nil 
+  #   self.is_pod_container = self.container_name.split("_")[1].split(".")[0] == "POD"
 
-    true
-  end
+  #   true
+  # end
 
 end

@@ -5,6 +5,7 @@ class Nic
   field :remote_id,   type: String
   field :name,        type: String
   field :kind,        type: String
+  field :status,      type: String
 
   validates :name,
             :kind, presence: true

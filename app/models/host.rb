@@ -4,6 +4,7 @@ class Host
 
   field :ip_address,    type: String
   field :memory_bytes,  type: Integer
+  field :name,          type: String
 
   validates :ip_address, presence: true
   validates :memory_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }

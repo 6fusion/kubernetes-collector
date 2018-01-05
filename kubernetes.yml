@@ -1,0 +1,341 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: kubernetes-collector
+  annotations:
+    pluginVersion: "0.5"
+    meterVersion: ">=0.11"
+    displayName: "Kubernetes Collector"
+    description: "Kubernetes Collector"
+objects:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: 6fusion-kubernetes-collector
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: mongo
+    namespace: 6fusion-kubernetes-collector
+    labels:
+      6fusion-app: mongo
+  spec:
+    ports:
+    - port: 27017
+    selector:
+      6fusion-app: mongo
+- apiVersion: apps/v1beta2
+  kind: Deployment
+  metadata:
+    name: mongodb
+    namespace: 6fusion-kubernetes-collector
+  spec:
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: mongodb
+      spec:
+        containers:
+        - name: mongodb
+          image: mongo:3.6.1
+          volumeMounts:
+          - mountPath: /data/db
+            name: mongodb-volume
+        volumes:
+        - name: mongodb-volume
+          emptyDir: {}
+- apiVersion: apps/v1beta2
+  kind: Deployment
+  metadata:
+    name: 6fusion-inventory-collector
+    namespace: 6fusion-kubernetes-collector
+    labels:
+      app: inventory-collector
+  spec:
+    replicas: 1
+    selector:
+      app: inventory-collector
+    template:
+      metadata:
+        labels:
+          app: inventory-collector
+      spec:
+        containers:
+        - name: inventory-collector
+          image: 6fusion/kubernetes-collector:alpha
+          command:
+          - /app/bin/inventory-collector.rb
+          env:
+          - name: KUBERNETES_HOST
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: host
+          - name: KUBERNETES_PORT
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: port
+          - name: KUBERNETES_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: token
+          - name: KUBERNETES_VERIFY_SSL
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: verify-ssl
+          - name: KUBERNETES_USE_SSL
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: use-ssl
+          - name: INFRASTRUCTURE_NAME
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: infrastructure-name
+- apiVersion: apps/v1beta2
+  kind: Deployment
+  metadata:
+    name: 6fusion-metrics-collector
+    namespace: 6fusion-kubernetes-collector
+    labels:
+      app: metrics-collector
+  spec:
+    replicas: 1
+    selector:
+      app: metrics-collector
+    template:
+      metadata:
+        labels:
+          app: metrics-collector
+      spec:
+        containers:
+        - name: metrics-collector
+          image: 6fusion/kubernetes-collector:alpha
+          command:
+          - /app/bin/metrics-collector.rb
+          env:
+          - name: KUBERNETES_HOST
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: host
+          - name: KUBERNETES_PORT
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: port
+          - name: KUBERNETES_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: token
+          - name: KUBERNETES_USE_SSL
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: use-ssl
+          - name: KUBERNETES_VERIFY_SSL
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: verify-ssl
+          - name: INFRASTRUCTURE_NAME
+            valueFrom:
+              secretKeyRef:
+                key: kube-secret
+                name: infrastructure-name
+- apiVersion: apps/v1beta2
+  kind: Deployment
+  metadata:
+    name: 6fusion-api-connector
+    namespace: 6fusion-kubernetes-collector
+    labels:
+      app: api-connector
+  spec:
+    replicas: 1
+    selector:
+      app: api-connector
+    template:
+      metadata:
+        labels:
+          app: api-connector
+      spec:
+        containers:
+        - name: api-connector
+          image: 6fusion/kubernetes-collector:alpha
+          command:
+          - /app/bin/api-connector.rb
+          env:
+          - name: METER_API_HOST
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: host
+          - name: METER_API_PORT
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: port
+          - name: METER_API_USE_SSL
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: use-ssl
+          - name: METER_API_VERIFY_SSL
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: verify-ssl
+          - name: METER_ORGANIZATION_ID
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: organization-id
+          - name: METER_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: token
+          - name: DEFAULT_WAN_IO
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: default-wan-io
+          - name: DEFAULT_LAN_IO
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: default-lan-io
+          - name: DEFAULT_DISK_IO
+            valueFrom:
+              secretKeyRef:
+                key: meter-secret
+                name: default-disk-io
+
+
+parameters:
+# Kubernetes config
+- description: "A descriptive name for the kubernetes cluster"
+  section: kube-secret
+  sectionDisplayName: Kubernetes
+  name: infrastructure-name
+  displayName: "Cluster Name"
+- description: "Host or IP address Kubernetes API server"
+  section: kube-secret
+  sectionDisplayName: Kubernetes
+  name: host
+  displayName: "Kubernetes Host"
+  expandExpression: ${KUBERNETES_PRIVATE_HOST}
+  advanced: true
+- name: port
+  section: kube-secret
+  sectionDisplayName: Kubernetes
+  displayName: "Kubernetes Port"
+  type: int
+  description: "Port of Kubernetes API server"
+  expandExpression: ${KUBERNETES_PRIVATE_PORT}
+  advanced: true
+- name: kubelet-port
+  section: kube-secret
+  sectionDisplayName: Kubernetes
+  displayName: "kubelet Port"
+  type: int
+  description: "Port of kubelet"
+  expandExpression: 10250
+  advanced: true
+- name: token
+  description: "Token of the Kubernetes API server (specify only for a remote Kube API Server)"
+  section: kube-secret
+  sectionDisplayName: Kubernetes
+  displayName: "Kubernetes Token"
+  advanced: true
+- name: use-ssl
+  section: kube-secret
+  sectionDisplayName: Kubernetes
+  description: "Access the Kubernetes API via SSL"
+  displayName: "Use SSL?"
+  type: boolean
+  value: "true"
+  advanced: true
+- name: verify-ssl
+  section: kube-secret
+  sectionDisplayName: Kubernetes
+  description: "Verify SSL certificate. Do not enable if using self-signed certificates"
+  displayName: "Verify SSL certificate?"
+  type: boolean
+  value: "false"
+  advanced: true
+# Meter config
+- name: organization-id
+  displayName: "Organization ID"
+  sectionDisplayName: "Meter API"
+  section: meter-secret
+  description: "ID of Organization object in the 6fusion Meter"
+  expandExpression: ${ORGANIZATION_ID}
+  advanced: true
+- name: host
+  displayName: Host
+  section: meter-secret
+  sectionDisplayName: "Meter API"
+  description: "Address of the 6fusion On-Prem Meter"
+  expandExpression: ${METER_API_HOST}
+  advanced: true
+- name: port
+  displayName: Port
+  section: meter-secret 
+  sectionDisplayName: "Meter API"
+  description: "Port of the 6fusion Meter. Typically 80 for unecrypted access; 443 for SSL"
+  expandExpression: ${METER_API_SSL_PORT}
+  advanced: true
+- name: token
+  displayName: "6fusion Meter API token"
+  section: meter-secret
+  sectionDisplayName: "Meter API"
+  description: "OAuth token to use to access the 6fusion Meter. Not required if OAuth is not enabled on the meter."
+  advanced: true
+- name: use-ssl
+  displayName: "Use SSL?"
+  section: meter-secret
+  sectionDisplayName: "Meter API"
+  description: "Use SSL for all interaction with the 6fusion Meter"
+  value: "true"
+  type: boolean
+  advanced: true
+- name: verify-ssl
+  displayName: "Verify SSL?"
+  sectionDisplayName: "Meter API"
+  section: meter-secret
+  description: "Verify 6fusion Meter SSL certificate. Do not enable if using self-signed certificates."
+  value: "false"
+  type: boolean
+  advanced: true
+- name: default-disk-io
+  sectionDisplayName: "Meter API"
+  section: meter-secret
+  type: int
+  displayName: "Default Disk I/O"
+  description: "The value to use for Disk I/O if the collector cannot determine the actual disk I/O speed"
+  value: "10000000000"
+  advanced: true
+- name: default-lan-io
+  sectionDisplayName: "Meter API"
+  section: meter-secret
+  type: int
+  displayName: "Default LAN I/O"
+  description: "The value to use for LAN I/O if the collector cannot determine the actual LAN I/O speed"
+  value: "10000000000"
+  advanced: true
+- name: default-wan-io
+  sectionDisplayName: "Meter API"
+  section: meter-secret
+  type: int
+  displayName: "Default WAN I/O"
+  description: "The value to use for WAN I/O if the collector cannot determine the actual WAN I/O speed"
+  advanced: true
+  value: "100000000"
+i

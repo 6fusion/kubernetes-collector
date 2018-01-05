@@ -9,9 +9,7 @@ class InventoryConfig
       url:               "",
       token:             "",
       headers:           {},
-      verify_ssl:        true,
-      cadvisor_protocol: ENV['CADVISOR_PROTOCOL'] || 'http',
-      cadvisor_port:     ENV['CADVISOR_PORT'] || '4194' }
+      verify_ssl:        true }
 
     @kubelet = {
       protocol:           "",
@@ -25,13 +23,13 @@ class InventoryConfig
       organization_id:   "" }
 
     # Kubernetes API values
-    kube_host = ENV['KUBERNETES_SERVICE_HOST']
-    kube_port = ENV['KUBERNETES_SERVICE_PORT'] || '443'
+    kube_host = ENV['KUBERNETES_HOST'] || ENV['KUBERNETES_SERVICE_HOST']
+    kube_port = ENV['KUBERNETES_PORT'] || ENV['KUBERNETES_SERVICE_PORT'] || '443'
     kube_token = ENV['KUBERNETES_TOKEN'] || File.read('/var/run/secrets/kubernetes.io/serviceaccount/token')
-    @kube[:verify_ssl] = ENV['KUBE_VERIFY_SSL']&.match(/^true|yes|1$/i)
-    kube_use_ssl = ENV['KUBE_USE_SSL']&.match(/^true|yes|1$/i) || kube_port.eql?('443')
+    @kube[:verify_ssl] = ENV['KUBERNETES_VERIFY_SSL']&.match(/^true|yes|1$/i)
+    kube_use_ssl = ENV['KUBERNETES_USE_SSL']&.match(/^true|yes|1$/i) || kube_port.eql?('443')
     kube_protocol = kube_use_ssl ? 'https' : 'http'
-    @kube[:host] = ENV['KUBE_HOST']
+    @kube[:host] = kube_host
     @kube[:url] = "#{kube_protocol}://#{kube_host}:#{kube_port}/api/#{KUBE_API_VERSION}"
     @kube[:token] = kube_token
     @kube[:headers] = {Authorization: "Bearer #{kube_token}"} if kube_use_ssl && !kube_token.to_s.empty?

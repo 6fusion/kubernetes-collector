@@ -14,6 +14,7 @@ $logger.info { "OpenShift metrics collector initialized to meter every #{collect
 t1 = Thread.new {
   loop {
     collector.collect_container_stats
+    File.write("/tmp/heartbeat", "")  # for kubernetes health check
     sleep(collection_interval) } }
 
 t2 = Thread.new {

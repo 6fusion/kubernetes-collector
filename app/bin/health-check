@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Check if heartbeat file has been updated within past minute
+test "$(find -name /tmp/heartbeat -mmin -1)"

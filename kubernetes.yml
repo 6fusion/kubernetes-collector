@@ -65,7 +65,13 @@ objects:
         - name: inventory-collector
           image: 6fusion/kubernetes-collector:alpha
           command:
-          - /app/bin/inventory-collector.rb
+          - /app/bin/inventory-collector
+          livenessProbe:
+            exec:
+              command:
+                - /app/bin/health-check
+            initialDelaySeconds: 300
+            periodSeconds: 300
           env:
           - name: KUBERNETES_HOST
             valueFrom:
@@ -117,7 +123,13 @@ objects:
         - name: metrics-collector
           image: 6fusion/kubernetes-collector:alpha
           command:
-          - /app/bin/metrics-collector.rb
+          - /app/bin/metrics-collector
+          livenessProbe:
+            exec:
+              command:
+                - /app/bin/health-check
+            initialDelaySeconds: 300
+            periodSeconds: 300
           env:
           - name: KUBERNETES_HOST
             valueFrom:
@@ -169,7 +181,13 @@ objects:
         - name: api-connector
           image: 6fusion/kubernetes-collector:alpha
           command:
-          - /app/bin/api-connector.rb
+          - /app/bin/api-connector
+          livenessProbe:
+            exec:
+              command:
+                - /app/bin/health-check
+            initialDelaySeconds: 300
+            periodSeconds: 300
           env:
           - name: METER_API_HOST
             valueFrom:
@@ -216,8 +234,6 @@ objects:
               secretKeyRef:
                 key: meter-secret
                 name: default-disk-io
-
-
 parameters:
 # Kubernetes config
 - description: "A descriptive name for the kubernetes cluster"

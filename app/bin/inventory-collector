@@ -12,7 +12,7 @@ Inventory::verify_organization($logger, config)
 begin
   while true
     InventoryCollector.new(config).collect
-    $logger.info 'Inventory collected successfully...'
+    File.write("/tmp/heartbeat", "")  # for kubernetes health check
     sleep INVENTORY_SCHEDULER_PERIOD
   end
 rescue Exception => e

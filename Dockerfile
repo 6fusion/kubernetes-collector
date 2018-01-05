@@ -22,6 +22,7 @@ RUN apk --no-cache add $BUILD_PACKAGES $RUBY_PACKAGES $RUNTIME_PACKAGES && \
     bundle install && \
     apk del $BUILD_PACKAGES
 
+USER nobody
 
 
 

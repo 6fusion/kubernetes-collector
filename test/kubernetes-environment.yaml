@@ -1,0 +1,37 @@
+# Development dependencies
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: 6fusion-kubernetes-collector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: 6fusion-kubernetes-collector
+  labels:
+    6fusion-app: mongo
+spec:
+  ports:
+  - port: 27017
+  selector:
+    6fusion-app: mongo
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: mongo
+  namespace: 6fusion-kubernetes-collector
+spec:
+  replicas: 1
+  selector:
+    6fusion-app: mongo
+  template:
+    metadata:
+      name: mongo
+      labels:
+        6fusion-app: mongo
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:3.6.0

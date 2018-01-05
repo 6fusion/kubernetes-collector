@@ -1,17 +1,16 @@
-# This class defines the MongoDB structure of a machine network interface
 class Nic
   include Mongoid::Document
+  include Mongoid::Timestamps
 
   field :remote_id,   type: String
   field :name,        type: String
-  field :kind,        type: String
+  field :kind,        type: String, default: 'LAN'
   field :status,      type: String
 
-  validates :name,
-            :kind, presence: true
-
   has_many   :nic_samples
-  belongs_to :machine
+  belongs_to :machine, index: true
+
+  index({ deleted_at: 1 }, { expire_after_seconds: 1.day, background: true, sparse: true })
 
   def to_payload
     { name: self.name,
@@ -22,12 +21,14 @@ class Nic
     nic_samples = self.nic_samples.where(reading_at: (start_time..end_time))
     count = nic_samples.count
 
-    receive_kilobits = obtain_average(nic_samples, :receive_kilobits, count)
-    transmit_kilobits = obtain_average(nic_samples, :transmit_kilobits, count)
+    receive_bytes_per_second = obtain_average(nic_samples, :network_rx, count)
+    transmit_bytes_per_second = obtain_average(nic_samples, :network_tx, count)
+
+    nic_samples.update_all("$set" => {submitted_at: Time.now})
 
     { id: self.remote_id,
-      receive_bytes_per_second: receive_kilobits,
-      transmit_bytes_per_second: transmit_kilobits }
+      receive_bytes_per_second: receive_bytes_per_second,
+      transmit_bytes_per_second: transmit_bytes_per_second }
   end
 
   def obtain_average(nic_samples, attribute, count)

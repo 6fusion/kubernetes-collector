@@ -1,14 +1,13 @@
-# This class defines the MongoDB structure of a machine nic sample that is sent to the 6fusion meter
 class NicSample
   include Mongoid::Document
 
   field :reading_at,        type: DateTime
-  field :transmit_kilobits, type: Integer, default: 0
-  field :receive_kilobits,  type: Integer, default: 0
-
-  validates :reading_at,        presence: true
-  validates :transmit_kilobits,
-            :receive_kilobits,  presence: true, numericality: { greater_than_or_equal_to: 0 }
+  field :network_tx,        type: Integer, default: 0
+  field :network_rx,        type: Integer, default: 0
+  field :machine_custom_id, type: String
 
   belongs_to :nic
+
+  index({ reading_at: 1 })
+  index({ submitted_at: 1 }, { expire_after_seconds: 30.minutes, background: true, sparse: true })
 end

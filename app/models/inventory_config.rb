@@ -9,7 +9,9 @@ class InventoryConfig
       url:               "",
       token:             "",
       headers:           {},
-      verify_ssl:        true }
+      verify_ssl:        true,
+      cadvisor_protocol: ENV['CADVISOR_PROTOCOL'] || 'http',
+      cadvisor_port:     ENV['CADVISOR_PORT'] || '4194' }
 
     @kubelet = {
       protocol:           "",

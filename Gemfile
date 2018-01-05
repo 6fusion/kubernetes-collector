@@ -1,7 +1,8 @@
 source 'https://rubygems.org'
 
-gem 'rest-client', '~1.8'
-gem 'mongoid', '~5.1.2'
+gem 'concurrent-ruby', '~>1.0.5', require: 'concurrent'
+gem 'rest-client', '~>1.8'
+gem 'mongoid', '~>5.1.2'
 
 group :dev do
   gem 'pry'

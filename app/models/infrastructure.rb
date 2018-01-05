@@ -1,6 +1,7 @@
 # This class defines the MongoDB structure of the infrastructure
 class Infrastructure
   include Mongoid::Document
+  include Mongoid::Timestamps
 
   field :remote_id,       type: String
   field :organization_id, type: String

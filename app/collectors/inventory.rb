@@ -2,8 +2,6 @@
 # as well as the containers running into it
 class InventoryCollector
 
-  CONTAINER_NAME_PREFIX = 'container-'
-
   def initialize(config)
     @config = config
     @data = { running_machines_vnames: [] }
@@ -18,14 +16,9 @@ class InventoryCollector
       collect_pods(infrastructure, namespace)
         .each{|pod|
           collect_containers(pod) }}
-#          update_pod_machines(pod) }}
 
-    # If there are pods that belong to a service, then tag their machines with the corresponding service
-#    tag_service_pods_machines
     # Power off dead machines so they are not metered anymore
     poweroff_dead_machines
-    # Reset metering status if all running machines have been metered
-    reset_machines_metering_status
   end
 
   def collect_infrastructure
@@ -36,9 +29,6 @@ class InventoryCollector
     # Does the infrastructure exist?
     begin
       infrastructure = Infrastructure.find_by(name: infrastructure_name)
-      # If the infrastructure's organization doesn't match the config organization, then
-      # delete everything and start from scratch
-      reset_cache_db if infrastructure.organization_id != @config.on_premise[:organization_id]
     rescue Mongoid::Errors::DocumentNotFound
       infrastructure = Infrastructure.new(name: infrastructure_name,
                                           organization_id: @config.on_premise[:organization_id])
@@ -69,7 +59,7 @@ class InventoryCollector
     infrastructure.hosts.destroy_all
     # Recreate hosts information
     nodes_response = KubeAPI::nodes(@config)
-    $logger.debug { "Found #{nodes_response.count} node(s)." }
+    $logger.debug { "Found #{nodes_response.count} node#{nodes_response.count > 1 ? 's' : ''}" }
 
     nodes_response['items'].each do |node|
 
@@ -120,7 +110,6 @@ class InventoryCollector
 
     pod_status['containerStatuses'].each do |container|
       unless @hosts.has_key?(pod_status['hostIP'])
-        binding.pry
         $logger.warn { "No node data for #{pod.name}. Skipping. " }
         next
       end
@@ -133,6 +122,7 @@ class InventoryCollector
       container_hash = container_id[0..11] # note: the 'io.kubernetes.container.hash' is not especially unique
 
       machine = Machine.find_or_initialize_by(custom_id: container_id)
+
       machine.host_ip = pod_status['hostIP']  # FIXME should this be pod.host_ip?
       host = @hosts[machine.host_ip]
 
@@ -186,6 +176,7 @@ class InventoryCollector
                                                      cpu_count: any_container.cpu_count,
                                                      cpu_speed_hz: any_container.cpu_speed_hz,
                                                      memory_bytes: any_container.memory_bytes)
+      $logger.info { "Saving POD container #{infrastructure_pod.name}/#{infrastructure_pod.custom_id}" }
 
       infrastructure_pod.tags += ['role:pod-infrastructure']
       infrastructure_pod.status = any_container.status
@@ -204,42 +195,6 @@ class InventoryCollector
       Pod.find_or_create_by(pod_json) }
   end
 
-  # def update_pod_machines(pod)
-  #   $logger.info { "Updating containers for pod #{pod.name}" }
-
-  #   # Find the infrastructure container for the pod
-  #   begin
-  #     machine = Machine.find_by(pod_id: pod.uid, is_pod_container: true)
-  #   rescue Mongoid::Errors::DocumentNotFound
-  #     begin
-  #       $logger.info { "Searching for pod container using annotations for #{pod.name} pod." }
-  #       machine = Machine.find_by(pod_id: pod.uid, is_pod_container: true)
-  #     rescue Mongoid::Errors::DocumentNotFound
-  #       $logger.warn { "Pod container was not found for #{pod.name} pod." }
-  #     end
-  #   end
-
-  #   # TODO is there an equivalent for straight k8s?
-  #   #user = project.dig('metadata','annotations','openshift.io/requester')
-
-  #   if machine
-  #     # Set and save machine basic attributes
-  #     #machine.name = "pod-#{machine.pod_id}"
-  #     machine.tags = machine.tags + [ "namespace:#{pod.namespace}", "pod:#{pod.name}" ]
-  #     machine.pod = pod['db_oject']
-  #     machine.status = 'poweredOn'
-  #     machine.save!
-  #   end
-
-  #   if pod.ready_containers.include?(machine.name)
-  #     machine.name = "#{container['name']}-#{container_id[0...8]}"
-  #       machine.status = 'poweredOn'
-  #       machine.pod = pod['db_object']
-  #       machine.save!
-  #     end
-  #   end
-  # end
-
   def services
     @services ||=
       begin
@@ -251,28 +206,9 @@ class InventoryCollector
       end
   end
 
-  # def tag_service_pods_machines
-  #   $logger.info { 'Collecting services for the infrastructure' }
-  #   response = KubeAPI::services(@config, {'metadata' => {'name' => 'uc6-dedicated'}})
-  #   response['items'].each do |service|
-  #     next if service['spec']['selector'].nil?
-  #     $logger.info { "Collecting pods for service #{service['metadata']['name']}" }
-  #     label_selector = []
-  #     service['spec']['selector'].each {|k, v| label_selector << "#{k}=#{v}"}
-  #     service_pods_response = KubeAPI::request(@config, "pods?labelSelector=#{label_selector.join(',')}")
-  #     next if service_pods_response['items'].nil?
-  #     service_pods_response['items'].each do |service_pod|
-  #       Pod.in(name: service_pod['metadata']['name']).each do |pod|
-  #         pod.machines.update(tags: ['type:container', 'platform:kubernetes',
-  #                                    "pod:#{service_pod['metadata']['name']}",
-  #                                    "service:#{service_pod['metadata']['name']}"])j
-  #       end
-  #     end
-  #   end
-  # end
-
   def collect_machine_disks(machine, storage_bytes)
     $logger.info { "Collecting disks for container #{machine.name}" }
+
     disk_name = "disk-#{machine.custom_id[0...8]}"
     disk = machine.disks.find_or_initialize_by(name: disk_name)
     disk.machine = machine
@@ -312,50 +248,6 @@ class InventoryCollector
     dead_machines.update_all(status: 'Deleted')
   end
 
-  def reset_machines_metering_status
-    $logger.info { 'Verifying the metering status of containers' }
-    pending_machines_count = get_pending_machines.count
-    if pending_machines_count > 0
-      # Do not do anything if there are still machines to be metered on in-process metering
-      $logger.info "There are still #{pending_machines_count} machines left to be metered. They will be checked on the next run."
-    else
-      $logger.info 'All machines are ready for metrics. Preparing them to be metered again'
-      get_ready_machines.update_all(metering_status: 'PENDING', last_metering_start: nil, locked: false, locked_by: '')
-    end
-  end
-
-  def get_pending_machines
-    Machine.where(status: 'poweredOn')
-      .or(
-        { metering_status: 'PENDING' },
-        { metering_status: 'METERING', :last_metering_start.gt => Time.now - METERING_TIMEOUT }
-      )
-  end
-
-  def get_ready_machines
-    Machine.where(status: 'poweredOn')
-      .or(
-        { :metering_status.in => [nil, 'METERED'] },
-        { metering_status: 'METERING', :last_metering_start.lte => Time.now - METERING_TIMEOUT }
-      )
-  end
-
-  def reset_cache_db
-    Disk.delete_all
-    DiskSample.delete_all
-    Host.delete_all
-    HostCpu.delete_all
-    HostDisk.delete_all
-    HostNic.delete_all
-    Infrastructure.delete_all
-    Machine.delete_all
-    MachineSample.delete_all
-    Network.delete_all
-    Nic.delete_all
-    NicSample.delete_all
-    Pod.delete_all
-  end
-
   def speed_for(kind:, host_count:)
     case kind
     when :lan  then (ENV['DEFAULT_LAN_IO']  || 10).to_i
@@ -372,6 +264,7 @@ class InventoryCollector
                       response['items']
                     end
   end
+
 
 
 end

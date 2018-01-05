@@ -68,10 +68,11 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  mongoid (= 5.1.2)
+  concurrent-ruby (~> 1.0.5)
+  mongoid (~> 5.1.2)
   mongoid-rspec (= 3.0.0)
   pry
-  rest-client (= 1.8)
+  rest-client (~> 1.8)
   rspec (= 3.3)
 
 BUNDLED WITH

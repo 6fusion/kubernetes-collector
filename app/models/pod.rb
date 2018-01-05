@@ -28,6 +28,7 @@ class Pod
             uid: params['metadata']['uid'],
             status: params['status']['phase'],
             ip: params['status']['podIP'],
+            host_ip: params['status']['hostIP'],
             ready_containers: ready_containers)
 
     end

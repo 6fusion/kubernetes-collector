@@ -1,6 +1,6 @@
-# This class defines the MongoDB structure of a machine disk
 class Disk
   include Mongoid::Document
+  include Mongoid::Timestamps
 
   field :remote_id,     type: String
   field :name,          type: String
@@ -11,7 +11,9 @@ class Disk
   validates :storage_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   has_many   :disk_samples
-  belongs_to :machine
+  belongs_to :machine, index: true
+
+  index({ deleted_at: 1 }, { expire_after_seconds: 1.day, background: true, sparse: true })
 
   def to_payload
     { name: self.name,
@@ -23,13 +25,15 @@ class Disk
     count = disk_samples.count
 
     usage_bytes = obtain_average(disk_samples, :usage_bytes, count)
-    read_kilobytes = obtain_average(disk_samples, :read_kilobytes, count)
-    write_kilobytes = obtain_average(disk_samples, :write_kilobytes, count)
+    read_bytes = obtain_average(disk_samples, :read_bytes_per_second, count)
+    write_bytes = obtain_average(disk_samples, :write_bytes_per_second, count)
+
+    disk_samples.update_all("$set" => {submitted_at: Time.now})
 
     { id: self.remote_id,
       usage_bytes: usage_bytes,
-      read_bytes_per_second: read_kilobytes,
-      write_bytes_per_second: write_kilobytes }
+      read_bytes_per_second: read_bytes,
+      write_bytes_per_second: write_bytes }
   end
 
   def obtain_average(disk_samples, attribute, count)

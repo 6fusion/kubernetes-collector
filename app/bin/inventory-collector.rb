@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require_relative '../config/defaults'
 
-$logger.info 'Initializing Kubernetes Inventory collector...'
+$logger.info 'Initializing Kubernetes Inventory Collector'
 
 # Load configuration values
 config = Inventory::load_configuration($logger)

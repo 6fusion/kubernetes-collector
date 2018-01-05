@@ -1,8 +1,8 @@
-# This class defines the MongoDB structure of a machine (container)
 class Machine
   include Mongoid::Document
+  include Mongoid::Timestamps
 
-  STATUS_POWERED_OFF = 'poweredOff'
+  STATUS_POWERED_OFF = 'Deleted'
   STATUS_POWERED_ON  = 'poweredOn'
   STATUS_PAUSED      = 'paused'
   
@@ -34,12 +34,14 @@ class Machine
             :cpu_speed_hz,
             :memory_bytes, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
-  has_many :disks
-  has_many :nics
+  has_many :disks, dependent: :delete
+  has_many :nics,  dependent: :delete
   has_many :machine_samples
   belongs_to :pod
 
-  # before_save :split_container_name, on: [ :create, :update ]
+
+  index({ status: 1, is_pod_container: 1 }, { background: true })
+  index({ deleted_at: 1 }, { expire_after_seconds: 1.day, background: true, sparse: true })
 
   def to_payload
     { custom_id: self.custom_id,
@@ -52,20 +54,20 @@ class Machine
       status: self.status }
   end
 
-  def to_samples_payload(start_time, end_time)
-    machine_sample = obtain_machine_sample(start_time, end_time)
-
-    { start_time: start_time.iso8601,
-      end_time: end_time.iso8601,
-      machine: machine_sample,
-      disks: self.disks.all.map {|disk| disk.to_samples_payload(start_time, end_time)},
-      nics: self.nics.all.map {|nic| nic.to_samples_payload(start_time, end_time)} }
+  # TODO disk/nic samples should be related by IDs, not times
+  def to_samples_payload(machine_samples, start_time, end_time)
+    $logger.debug { "Averaging #{machine_samples.count} samples for machine: #{self.name}, time span: #{start_time} -> #{end_time}x" }
+    payload = { start_time: start_time.iso8601,
+                end_time: end_time.iso8601,
+                machine: average_machine_samples(machine_samples.to_a),
+                disks: self.disks.all.map {|disk| disk.to_samples_payload(start_time, end_time) },
+                nics: self.nics.all.map {|nic| nic.to_samples_payload(start_time, end_time)} }
+    machine_samples.update_all("$set" => {submitted_at: Time.now})
+    payload
   end
 
-  def obtain_machine_sample(start_time, end_time)
-    machine_samples = self.machine_samples.where(reading_at: (start_time..end_time))
+  def average_machine_samples(machine_samples)
     count = machine_samples.count
-
     cpu_usage_percent = obtain_average(machine_samples, :cpu_usage_percent, count)
     memory_bytes = obtain_average(machine_samples, :memory_bytes, count).to_i
 
@@ -77,13 +79,8 @@ class Machine
     machine_samples.inject(0.0) { |sum, sample| sum + sample.send(attribute) } / count
   end
 
-  protected
-
-  # def split_container_name
-  #   self.pod_id = self.container_name.split("_")[4] || nil 
-  #   self.is_pod_container = self.container_name.split("_")[1].split(".")[0] == "POD"
-
-  #   true
-  # end
+  def powered_off?
+    self.status == 'Deleted'
+  end
 
 end

@@ -11,7 +11,7 @@ LABEL name="6fusion/kubernetes-collector"  \
       build-date=""
 
 ENV BUILD_PACKAGES build-base curl-dev libffi-dev gcc git zlib-dev
-ENV RUBY_PACKAGES ruby ruby-bundler ruby-dev ruby-io-console ruby-nokogiri
+ENV RUBY_PACKAGES ruby ruby-bundler ruby-dev ruby-io-console ruby-nokogiri ruby-bigdecimal
 ENV RUNTIME_PACKAGES ca-certificates
 
 WORKDIR /app

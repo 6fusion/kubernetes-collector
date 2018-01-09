@@ -32,6 +32,3 @@ Mongoid::Config.load_configuration({clients: {default: {
 
 $logger = Logger.new(STDOUT)
 $logger.level = ENV['LOG_LEVEL'] || Logger::INFO
-
-puts "log level=#{$logger.level},${Logger::DEBUG|}"
-ENV['RESTCLIENT_LOG'] = 'stdout' if $logger.level == Logger::DEBUG

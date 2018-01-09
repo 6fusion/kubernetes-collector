@@ -23,9 +23,9 @@ class InventoryConfig
       organization_id:   "" }
 
     # Kubernetes API values
-    kube_host = ENV['KUBERNETES_HOST'] || ENV['KUBERNETES_SERVICE_HOST']
-    kube_port = ENV['KUBERNETES_PORT'] || ENV['KUBERNETES_SERVICE_PORT'] || '443'
-    kube_token = ENV['KUBERNETES_TOKEN'] || File.read('/var/run/secrets/kubernetes.io/serviceaccount/token')
+    kube_host = ENV['KUBERNETES_HOST'].empty? ? ENV['KUBERNETES_SERVICE_HOST'] : ENV['KUBERNETES_HOST']
+    kube_port = ENV['KUBERNETES_PORT'].empty? ? ENV['KUBERNETES_SERVICE_PORT'] : ENV['KUBERNETES_PORT']
+    kube_token = ENV['KUBERNETES_TOKEN'].empty? File.read('/var/run/secrets/kubernetes.io/serviceaccount/token') : ENV['KUBERNETES_TOKEN']
     @kube[:verify_ssl] = ENV['KUBERNETES_VERIFY_SSL']&.match(/^true|yes|1$/i)
     kube_use_ssl = ENV['KUBERNETES_USE_SSL']&.match(/^true|yes|1$/i) || kube_port.eql?('443')
     kube_protocol = kube_use_ssl ? 'https' : 'http'
@@ -46,6 +46,8 @@ class InventoryConfig
     @on_premise[:token] = ENV['METER_API_TOKEN'] || ""
     @on_premise[:verify_ssl] = ENV['METER_API_VERIFY_SSL']&.match(/^true|yes|1$/i) ? true : false
     @on_premise[:organization_id] = ENV['METER_ORGANIZATION_ID']
+
+    $logger.debug "Configuration:\nkube: #{@kube}\nkubelet: #{@kubelet}\nmeter:#{@on_premise}"
   end
 
 end

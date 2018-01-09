@@ -30,8 +30,7 @@ class InventoryCollector
     begin
       infrastructure = Infrastructure.find_by(name: infrastructure_name)
     rescue Mongoid::Errors::DocumentNotFound
-      infrastructure = Infrastructure.new(name: infrastructure_name,
-                                          organization_id: @config.on_premise[:organization_id])
+      infrastructure = Infrastructure.new(name: infrastructure_name)
       $logger.info { "Creating #{infrastructure_name} infrastructure" }
     end
     infrastructure.tags = ['platform:kubernetes', 'collector:kubernetes']

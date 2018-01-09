@@ -66,6 +66,8 @@ objects:
           image: 6fusion/kubernetes-collector:alpha
           command:
           - /app/bin/inventory-collector
+          imagePullSecrets:
+          - name: meter-registrya
           livenessProbe:
             exec:
               command:
@@ -76,33 +78,33 @@ objects:
           - name: KUBERNETES_HOST
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: host
+                key: host
+                name:  kube-secret
           - name: KUBERNETES_PORT
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: port
+                key: port
+                name:  kube-secret
           - name: KUBERNETES_TOKEN
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: token
+                key: token
+                name:  kube-secret
           - name: KUBERNETES_VERIFY_SSL
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: verify-ssl
+                key: verify-ssl
+                name:  kube-secret
           - name: KUBERNETES_USE_SSL
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: use-ssl
+                key: use-ssl
+                name:  kube-secret
           - name: INFRASTRUCTURE_NAME
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: infrastructure-name
+                key: infrastructure-name
+                name:  kube-secret
 - apiVersion: apps/v1beta2
   kind: Deployment
   metadata:
@@ -130,37 +132,39 @@ objects:
                 - /app/bin/health-check
             initialDelaySeconds: 300
             periodSeconds: 300
+          imagePullSecrets:
+          - name: meter-registrya
           env:
           - name: KUBERNETES_HOST
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: host
+                key: host
+                name:  kube-secret
           - name: KUBERNETES_PORT
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: port
+                key: port
+                name:  kube-secret
           - name: KUBERNETES_TOKEN
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: token
+                key: token
+                name:  kube-secret
           - name: KUBERNETES_USE_SSL
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: use-ssl
+                key: use-ssl
+                name:  kube-secret
           - name: KUBERNETES_VERIFY_SSL
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: verify-ssl
+                key: verify-ssl
+                name:  kube-secret
           - name: INFRASTRUCTURE_NAME
             valueFrom:
               secretKeyRef:
-                key: kube-secret
-                name: infrastructure-name
+                key: infrastructure-name
+                name:  kube-secret
 - apiVersion: apps/v1beta2
   kind: Deployment
   metadata:
@@ -188,52 +192,54 @@ objects:
                 - /app/bin/health-check
             initialDelaySeconds: 300
             periodSeconds: 300
+          imagePullSecrets:
+          - name: meter-registrya
           env:
           - name: METER_API_HOST
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: host
+                key: host
+                name:  meter-secret
           - name: METER_API_PORT
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: port
+                key: port
+                name:  meter-secret
           - name: METER_API_USE_SSL
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: use-ssl
+                key: use-ssl
+                name:  meter-secret
           - name: METER_API_VERIFY_SSL
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: verify-ssl
+                key: verify-ssl
+                name:  meter-secret
           - name: METER_ORGANIZATION_ID
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: organization-id
+                key: organization-id
+                name:  meter-secret
           - name: METER_API_TOKEN
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: token
+                key: token
+                name:  meter-secret
           - name: DEFAULT_WAN_IO
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: default-wan-io
+                key: default-wan-io
+                name:  meter-secret
           - name: DEFAULT_LAN_IO
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: default-lan-io
+                key: default-lan-io
+                name:  meter-secret
           - name: DEFAULT_DISK_IO
             valueFrom:
               secretKeyRef:
-                key: meter-secret
-                name: default-disk-io
+                key: default-disk-io
+                name:  meter-secret
 parameters:
 # Kubernetes config
 - description: "A descriptive name for the kubernetes cluster"
@@ -262,7 +268,7 @@ parameters:
   displayName: "kubelet Port"
   type: int
   description: "Port of kubelet"
-  expandExpression: 10250
+  value: 10250
   advanced: true
 - name: token
   description: "Token of the Kubernetes API server (specify only for a remote Kube API Server)"
@@ -354,4 +360,3 @@ parameters:
   description: "The value to use for WAN I/O if the collector cannot determine the actual WAN I/O speed"
   advanced: true
   value: "100000000"
-i

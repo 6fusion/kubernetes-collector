@@ -25,7 +25,7 @@ class InventoryConfig
     # Kubernetes API values
     kube_host = ENV['KUBERNETES_HOST'].empty? ? ENV['KUBERNETES_SERVICE_HOST'] : ENV['KUBERNETES_HOST']
     kube_port = ENV['KUBERNETES_PORT'].empty? ? ENV['KUBERNETES_SERVICE_PORT'] : ENV['KUBERNETES_PORT']
-    kube_token = ENV['KUBERNETES_TOKEN'].empty? File.read('/var/run/secrets/kubernetes.io/serviceaccount/token') : ENV['KUBERNETES_TOKEN']
+    kube_token = ENV['KUBERNETES_TOKEN'].empty? ? File.read('/var/run/secrets/kubernetes.io/serviceaccount/token') : ENV['KUBERNETES_TOKEN']
     @kube[:verify_ssl] = ENV['KUBERNETES_VERIFY_SSL']&.match(/^true|yes|1$/i)
     kube_use_ssl = ENV['KUBERNETES_USE_SSL']&.match(/^true|yes|1$/i) || kube_port.eql?('443')
     kube_protocol = kube_use_ssl ? 'https' : 'http'

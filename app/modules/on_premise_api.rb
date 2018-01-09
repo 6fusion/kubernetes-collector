@@ -11,6 +11,8 @@ module OnPremiseApi
                                              verify_ssl: config.on_premise[:verify_ssl])
       JSON.parse(response.body)
     rescue Exception => e
+      $logger.error { e }
+      $logger.debug { "payload: #{parameters.to_json}" }
       raise e
     end
   end

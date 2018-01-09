@@ -7,7 +7,7 @@ module OnPremiseApi
       response = RestClient::Request.execute(url: "#{config.on_premise[:url]}/#{endpoint}#{token_param}",
                                              method: method,
                                              payload: parameters.to_json,
-                                             accept: :json, content_type: :json,
+                                             headers: { accept: :json, content_type: :json },
                                              verify_ssl: config.on_premise[:verify_ssl])
       JSON.parse(response.body)
     rescue Exception => e

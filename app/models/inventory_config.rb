@@ -43,7 +43,7 @@ class InventoryConfig
     on_premise_protocol = ENV['METER_API_USE_SSL']&.match(/^true|yes|1$/i) ? 'https' : 'http'
 
     @on_premise[:url] = "#{on_premise_protocol}://#{on_premise_host}:#{on_premise_port}/api/#{ONPREMISE_API_VERSION}"
-    @on_premise[:token] = ENV['METER_API_TOKEN'] || ""
+    @on_premise[:token] = ENV['METER_API_TOKEN']
     @on_premise[:verify_ssl] = ENV['METER_API_VERIFY_SSL']&.match(/^true|yes|1$/i) ? true : false
     @on_premise[:organization_id] = ENV['METER_ORGANIZATION_ID']
 

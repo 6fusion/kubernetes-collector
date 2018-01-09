@@ -18,12 +18,12 @@ objects:
     name: mongo
     namespace: 6fusion-kubernetes-collector
     labels:
-      6fusion-app: mongo
+      app: mongodb
   spec:
     ports:
     - port: 27017
     selector:
-      6fusion-app: mongo
+      app: mongodb
 - apiVersion: apps/v1beta2
   kind: Deployment
   metadata:

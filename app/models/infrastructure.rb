@@ -4,12 +4,11 @@ class Infrastructure
   include Mongoid::Timestamps
 
   field :remote_id,       type: String
-  field :organization_id, type: String
   field :name,            type: String
   field :tags,            type: Array
   field :status,          type: String, default: 'Active'
 
-  validates :organization_id, :name, :tags, presence: true
+  validates :name, :tags, presence: true
 
   has_many :networks
   has_many :hosts

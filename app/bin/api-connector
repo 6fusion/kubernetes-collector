@@ -25,4 +25,4 @@ connector = OnPremiseConnector.new(config)
 loop {
   connector.sync
   File.write("/tmp/heartbeat", "")  # for kubernetes health check
-  sleep 1.second }
+  sleep 30.seconds }

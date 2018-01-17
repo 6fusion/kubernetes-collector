@@ -80,10 +80,16 @@ puts "LINE: #{__LINE__}"
     puts "WUTWUTWUTWUTWUT"
     $logger.debug { "Syncing machines" }
     puts "COUNT: #{ Machine.where(deleted_at: nil).hint(deleted_at: 1).count }"
+    @fek_pool = Concurrent::ThreadPoolExecutor.new(
+        min_threads: 2,
+        max_threads: 10,
+        max_queue: 12,
+        fallback_policy: :caller_runs )
+    
     Machine.where(deleted_at: nil).hint(deleted_at: 1).each do |machine|
       $logger.debug { "Syncing machine #{machine.inspect}" }
       puts "syncing #{machine.inspect}"
-      @thread_pool.post do
+      @fek_pool.post do
         begin
           if machine.remote_id
             if machine.updated_at >= @last_run
@@ -103,8 +109,8 @@ puts "LINE: #{__LINE__}"
       end
     end
     puts "SHTUDWING"
-    @thread_pool.shutdown
-    @thread_pool.wait_for_termination
+    @fek_pool.shutdown
+    @fek_pool.wait_for_termination
     puts "ALL DONE"
   end
 

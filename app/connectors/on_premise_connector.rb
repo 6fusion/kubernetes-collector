@@ -86,7 +86,8 @@ puts "LINE: #{__LINE__}"
         max_queue: 12,
         fallback_policy: :caller_runs )
     
-    Machine.where(deleted_at: nil).hint(deleted_at: 1).each do |machine|
+    m =    Machine.where(deleted_at: nil).hint(deleted_at: 1)
+    m.each do |machine|
       $logger.debug { "Syncing machine #{machine.inspect}" }
       puts "syncing #{machine.inspect}"
 
@@ -108,7 +109,8 @@ puts "LINE: #{__LINE__}"
         end
 
     end
-    puts "SHTUDWING"
+
+    puts "SHTUDWING #{m.count} #{m.size}"
     @fek_pool.shutdown
     @fek_pool.wait_for_termination
     puts "ALL DONE"

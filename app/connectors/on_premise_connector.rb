@@ -77,6 +77,10 @@ puts "LINE: #{__LINE__}"
   end
 
   def sync_machines
+    puts "WUTWUTWUTWUTWUT"
+    puts "WUTWUTWUTWUTWUT"
+    puts "WUTWUTWUTWUTWUT"
+    puts "WUTWUTWUTWUTWUT"
     $logger.debug { "Syncing machines" }
     Machine.where(deleted_at: nil).hint(deleted_at: 1).each do |machine|
       $logger.debug { "Syncing machine #{machine.inspect}" }

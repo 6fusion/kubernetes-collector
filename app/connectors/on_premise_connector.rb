@@ -78,12 +78,11 @@ puts "LINE: #{__LINE__}"
 
   def sync_machines
     puts "WUTWUTWUTWUTWUT"
-    puts "WUTWUTWUTWUTWUT"
-    puts "WUTWUTWUTWUTWUT"
-    puts "WUTWUTWUTWUTWUT"
     $logger.debug { "Syncing machines" }
+    puts "COUNT: #{ Machine.where(deleted_at: nil).hint(deleted_at: 1).count }"
     Machine.where(deleted_at: nil).hint(deleted_at: 1).each do |machine|
       $logger.debug { "Syncing machine #{machine.inspect}" }
+      puts "syncing #{machine.inspect}"
       @thread_pool.post do
         begin
           if machine.remote_id
@@ -103,8 +102,10 @@ puts "LINE: #{__LINE__}"
         end
       end
     end
+    puts "SHTUDWING"
     @thread_pool.shutdown
     @thread_pool.wait_for_termination
+    puts "ALL DONE"
   end
 
   def sync_disks(machine)

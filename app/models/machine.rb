@@ -5,11 +5,10 @@ class Machine
   STATUS_POWERED_OFF = 'Deleted'
   STATUS_POWERED_ON  = 'poweredOn'
   STATUS_PAUSED      = 'paused'
-  
+
   field :custom_id,           type: String
   field :remote_id,           type: String
   field :name,                type: String
-  field :virtual_name,        type: String
   field :cpu_count,           type: Integer
   field :cpu_speed_hz,        type: Integer
   field :memory_bytes,        type: Integer
@@ -46,7 +45,6 @@ class Machine
   def to_payload
     { custom_id: self.custom_id,
       name: self.name,
-      virtual_name: self.virtual_name,
       cpu_count: self.cpu_count,
       cpu_speed_hz: self.cpu_speed_hz,
       memory_bytes: self.memory_bytes,

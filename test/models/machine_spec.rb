@@ -1,11 +1,11 @@
 RSpec.describe Machine do
   describe 'fields' do
-    it { is_expected.to have_fields(:remote_id, :name, :virtual_name, :cpu_count, :cpu_speed_hz, :memory_bytes, :tags, :status, :metering_status, :last_metering_start, :host_ip_address, :locked, :locked_by) }
+    it { is_expected.to have_fields(:remote_id, :name, :custom_id, :cpu_count, :cpu_speed_hz, :memory_bytes, :tags, :status, :metering_status, :last_metering_start, :host_ip_address, :locked, :locked_by) }
   end
 
   describe 'validations' do
     it { is_expected.to validate_presence_of(:name) }
-    it { is_expected.to validate_presence_of(:virtual_name) }
+    it { is_expected.to validate_presence_of(:custom_id) }
     it { is_expected.to validate_presence_of(:cpu_count) }
     it { is_expected.to validate_presence_of(:cpu_speed_hz) }
     it { is_expected.to validate_presence_of(:memory_bytes) }

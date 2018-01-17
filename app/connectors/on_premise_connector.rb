@@ -18,7 +18,9 @@ class OnPremiseConnector
     start_time = Time.now
 
     sync_infrastructures
+puts "LINE: #{__LINE__}"
     sync_machines
+puts "LINE: #{__LINE__}"
     sync_samples
 
     $logger.info { "Submission finished in #{(Time.now - start_time).round} seconds" }
@@ -75,7 +77,9 @@ class OnPremiseConnector
   end
 
   def sync_machines
+    $logger.debug { "Syncing machines" }
     Machine.where(deleted_at: nil).hint(deleted_at: 1).each do |machine|
+      $logger.debug { "Syncing machine #{machine.inspect}" }
       @thread_pool.post do
         begin
           if machine.remote_id

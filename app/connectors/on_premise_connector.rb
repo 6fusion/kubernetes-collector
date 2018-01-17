@@ -89,7 +89,7 @@ puts "LINE: #{__LINE__}"
     Machine.where(deleted_at: nil).hint(deleted_at: 1).each do |machine|
       $logger.debug { "Syncing machine #{machine.inspect}" }
       puts "syncing #{machine.inspect}"
-      @fek_pool.post do
+
         begin
           if machine.remote_id
             if machine.updated_at >= @last_run
@@ -106,7 +106,7 @@ puts "LINE: #{__LINE__}"
         rescue => e
           $logger.error e
         end
-      end
+
     end
     puts "SHTUDWING"
     @fek_pool.shutdown
@@ -158,16 +158,20 @@ puts "LINE: #{__LINE__}"
   end
 
   def create_machine(machine)
-    endpoint = "infrastructures/#{@infrastructure.remote_id}/machines"
-    payload = machine.to_payload
-    response = request_api(endpoint, :post, @config, payload)
-    update_remote_id(machine, response)
+    @fek_pool.post do
+      endpoint = "infrastructures/#{@infrastructure.remote_id}/machines"
+      payload = machine.to_payload
+      response = request_api(endpoint, :post, @config, payload)
+      update_remote_id(machine, response)
+    end
   end
 
   def update_machine(machine)
-    endpoint = "machines/#{machine.remote_id}"
-    payload = machine.to_payload
-    request_api(endpoint, :put, @config, payload)
+    @fek_pool.post do
+      endpoint = "machines/#{machine.remote_id}"
+      payload = machine.to_payload
+      request_api(endpoint, :put, @config, payload)
+    end
   end
 
   def create_disk(disk)

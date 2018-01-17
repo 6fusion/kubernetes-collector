@@ -40,7 +40,7 @@ class Machine
 
 
   index({ status: 1, is_pod_container: 1 }, { background: true })
-  index({ deleted_at: 1 }, { expire_after_seconds: 1.day, background: true, sparse: true })
+  index({ deleted_at: 1 }, { expire_after_seconds: 1.day, background: true })
 
   def to_payload
     { custom_id: self.custom_id,

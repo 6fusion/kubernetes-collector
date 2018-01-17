@@ -18,9 +18,7 @@ class OnPremiseConnector
     start_time = Time.now
 
     sync_infrastructures
-puts "LINE: #{__LINE__}"
     sync_machines
-puts "LINE: #{__LINE__}"
     sync_samples
 
     $logger.info { "Submission finished in #{(Time.now - start_time).round} seconds" }
@@ -77,20 +75,9 @@ puts "LINE: #{__LINE__}"
   end
 
   def sync_machines
-    puts "WUTWUTWUTWUTWUT"
-    $logger.debug { "Syncing machines" }
-    puts "COUNT: #{ Machine.where(deleted_at: nil).hint(deleted_at: 1).count }"
-    @fek_pool = Concurrent::ThreadPoolExecutor.new(
-        min_threads: 2,
-        max_threads: 10,
-        max_queue: 12,
-        fallback_policy: :caller_runs )
-    
-    m =    Machine.where(deleted_at: nil).hint(deleted_at: 1)
-    m.each do |machine|
+    Machine.where(deleted_at: nil).hint(deleted_at: 1).each do |machine|
       $logger.debug { "Syncing machine #{machine.inspect}" }
-      puts "syncing #{machine.inspect}"
-
+      @thread_pool.post do
         begin
           if machine.remote_id
             if machine.updated_at >= @last_run
@@ -107,13 +94,10 @@ puts "LINE: #{__LINE__}"
         rescue => e
           $logger.error e
         end
-
+      end
     end
-
-    puts "SHTUDWING #{m.count} #{m.size}"
-    @fek_pool.shutdown
-    @fek_pool.wait_for_termination
-    puts "ALL DONE"
+    @thread_pool.shutdown
+    @thread_pool.wait_for_termination
   end
 
   def sync_disks(machine)

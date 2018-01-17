@@ -21,8 +21,8 @@ class Nic
     nic_samples = self.nic_samples.where(reading_at: (start_time..end_time))
     count = nic_samples.count
 
-    receive_bytes_per_second = obtain_average(nic_samples, :network_rx, count)
-    transmit_bytes_per_second = obtain_average(nic_samples, :network_tx, count)
+    receive_bytes_per_second = obtain_average(nic_samples, :receive_bytes_per_second, count)
+    transmit_bytes_per_second = obtain_average(nic_samples, :transmit_bytes_per_second, count)
 
     nic_samples.update_all("$set" => {submitted_at: Time.now})
 

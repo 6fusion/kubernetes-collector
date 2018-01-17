@@ -2,8 +2,8 @@ class NicSample
   include Mongoid::Document
 
   field :reading_at,        type: DateTime
-  field :network_tx,        type: Integer, default: 0
-  field :network_rx,        type: Integer, default: 0
+  field :transmit_bytes_per_second, type: Integer, default: 0
+  field :receive_bytes_per_second, type: Integer, default: 0
   field :machine_custom_id, type: String
 
   belongs_to :nic

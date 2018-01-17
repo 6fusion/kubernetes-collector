@@ -27,16 +27,14 @@ class MetricsCollector
           receive_rate = (pod_summary['network_rx'] - previous.network_rx).to_f / duration
           machine.nics.first.nic_samples.create!(machine_custom_id: machine.custom_id,
                                                  reading_at: reading_at,
-                                                 network_tx: pod_summary['network_tx'],
-                                                 network_rx: pod_summary['network_rx'],
                                                  transmit_bytes_per_second: transmit_rate,
                                                  receive_bytes_per_second: receive_rate)
         else
           # else - since we want a rate, we can't do anything until we have at least 1 prior sample
           machine.nics.first.nic_samples.create!(machine_custom_id: machine.custom_id,
                                                  reading_at: reading_at,
-                                                 network_tx: pod_summary['network_tx'],
-                                                 network_rx: pod_summary['network_rx'])
+                                                 transmit_bytes_per_second: pod_summary['network_tx'],
+                                                 receive_bytes_per_second: pod_summary['receive_tx'])
         end
 
         # The OnPrem connector code does a MachineSamples.where... so we need to create a dummy sample for the above samples to get picked up

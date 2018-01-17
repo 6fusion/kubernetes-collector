@@ -193,51 +193,51 @@ objects:
             initialDelaySeconds: 300
             periodSeconds: 300
           env:
-        - name: METER_API_HOST
-          valueFrom:
-            secretKeyRef:
-              key: host
-              name:  meter-secret
-        - name: METER_API_PORT
-          valueFrom:
-            secretKeyRef:
-              key: port
-              name:  meter-secret
-        - name: METER_API_USE_SSL
-          valueFrom:
-            secretKeyRef:
-              key: use-ssl
-              name:  meter-secret
-        - name: METER_API_VERIFY_SSL
-          valueFrom:
-            secretKeyRef:
-              key: verify-ssl
-              name:  meter-secret
-        - name: METER_ORGANIZATION_ID
-          valueFrom:
-            secretKeyRef:
-              key: organization-id
-              name:  meter-secret
-        - name: METER_API_TOKEN
-          valueFrom:
-            secretKeyRef:
-              key: token
-              name:  meter-secret
-        - name: DEFAULT_WAN_IO
-          valueFrom:
-            secretKeyRef:
-              key: default-wan-io
-              name:  meter-secret
-        - name: DEFAULT_LAN_IO
-          valueFrom:
-            secretKeyRef:
-              key: default-lan-io
-              name:  meter-secret
-        - name: DEFAULT_DISK_IO
-          valueFrom:
-            secretKeyRef:
-              key: default-disk-io
-              name:  meter-secret
+          - name: METER_API_HOST
+            valueFrom:
+              secretKeyRef:
+                key: host
+                name: meter-secret
+          - name: METER_API_PORT
+            valueFrom:
+              secretKeyRef:
+                key: port
+                name:  meter-secret
+          - name: METER_API_USE_SSL
+            valueFrom:
+              secretKeyRef:
+                key: use-ssl
+                name:  meter-secret
+          - name: METER_API_VERIFY_SSL
+            valueFrom:
+              secretKeyRef:
+                key: verify-ssl
+                name:  meter-secret
+          - name: METER_ORGANIZATION_ID
+            valueFrom:
+              secretKeyRef:
+                key: organization-id
+                name:  meter-secret
+          - name: METER_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: token
+                name:  meter-secret
+          - name: DEFAULT_WAN_IO
+            valueFrom:
+              secretKeyRef:
+                key: default-wan-io
+                name:  meter-secret
+          - name: DEFAULT_LAN_IO
+            valueFrom:
+              secretKeyRef:
+                key: default-lan-io
+                name:  meter-secret
+          - name: DEFAULT_DISK_IO
+            valueFrom:
+              secretKeyRef:
+                key: default-disk-io
+                name:  meter-secret
         imagePullSecrets:
         - name: meter-registry
                 

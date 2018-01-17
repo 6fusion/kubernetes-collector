@@ -160,20 +160,16 @@ puts "LINE: #{__LINE__}"
   end
 
   def create_machine(machine)
-    @fek_pool.post do
-      endpoint = "infrastructures/#{@infrastructure.remote_id}/machines"
-      payload = machine.to_payload
-      response = request_api(endpoint, :post, @config, payload)
-      update_remote_id(machine, response)
-    end
+    endpoint = "infrastructures/#{@infrastructure.remote_id}/machines"
+    payload = machine.to_payload
+    response = request_api(endpoint, :post, @config, payload)
+    update_remote_id(machine, response)
   end
 
   def update_machine(machine)
-    @fek_pool.post do
-      endpoint = "machines/#{machine.remote_id}"
-      payload = machine.to_payload
-      request_api(endpoint, :put, @config, payload)
-    end
+    endpoint = "machines/#{machine.remote_id}"
+    payload = machine.to_payload
+    request_api(endpoint, :put, @config, payload)
   end
 
   def create_disk(disk)

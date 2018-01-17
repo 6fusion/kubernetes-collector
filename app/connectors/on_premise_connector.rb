@@ -90,7 +90,7 @@ class OnPremiseConnector
           end
           sync_disks(machine)
           sync_nics(machine)
-          machine.update_attribute(:deleted_at, Time.now) if machine.powered_off? and (machine.machines_samples.count == 0)
+          machine.update_attribute(:deleted_at, Time.now) if machine.powered_off? and (machine.machine_samples.count == 0)
         rescue => e
           $logger.error e
         end

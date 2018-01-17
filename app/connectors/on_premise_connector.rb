@@ -40,6 +40,7 @@ class OnPremiseConnector
           begin
             machine_samples = machine.machine_samples.where(reading_at: (start_time..end_time), submitted_at: nil)
             if machine_samples.count > 0
+              $logger.debug { "Submitting #{machine_samples.count} samples for #{machine.name}" }
               payload = machine.to_samples_payload(machine_samples, start_time, end_time)
               endpoint = "machines/#{machine.remote_id}/samples"
               request_api(endpoint, :post, @config, payload)

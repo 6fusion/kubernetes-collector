@@ -1,4 +1,5 @@
 #!/bin/sh
 
+HEALTH_CHECK_INTERVAL=${HEALTH_CHECK_INTERVAL:-5}
 # Check if heartbeat file has been updated within past minute
-test "$(find -name /tmp/heartbeat -mmin -1)"
+test "$(find /tmp -name heartbeat -mmin -$HEALTH_CHECK_INTERVAL)"

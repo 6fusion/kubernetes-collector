@@ -32,7 +32,7 @@ class OnPremiseConnector
     while oldest_sample and (oldest_sample.reading_at < 5.minutes.ago)
       start_time = oldest_sample.reading_at
       end_time = start_time + 5.minutes
-      $logger.debug { "Submitting samples for range: #{start_time} -> #{end_time}" }
+      $logger.info { "Submitting samples for range: #{start_time} -> #{end_time}" }
       MachineSample.and([ reading_at: (start_time..end_time), submitted_at: nil])
         .distinct(:machine_id).each do |machine_id|
         @thread_pool.post do

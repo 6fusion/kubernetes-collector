@@ -28,7 +28,6 @@ class OnPremiseConnector
 
   def sync_samples
     oldest_sample = MachineSample.where(reading_at: { "$lte" => Time.now - 5.minutes}, submitted_at: nil ).order_by(reading_at: 'ASC').first
-    $logger.debug { "Oldest sample: #{oldest_sample.reading_at}" }
 
     while oldest_sample and (oldest_sample.reading_at < 5.minutes.ago)
       start_time = oldest_sample.reading_at
@@ -40,7 +39,7 @@ class OnPremiseConnector
           begin
             machine = Machine.find(machine_id)
             machine_samples = machine.machine_samples.where(reading_at: (start_time..end_time), submitted_at: nil)
-            $logger.debug { "Submitting #{machine_samples.count} samples for #{machine.name}" }
+            $logger.debug { "Averaging #{machine_samples.count} samples for #{machine.name}" }
             payload = machine.to_samples_payload(machine_samples, start_time, end_time)
             endpoint = "machines/#{machine.remote_id}/samples"
             request_api(endpoint, :post, @config, payload)

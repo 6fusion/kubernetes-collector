@@ -53,7 +53,6 @@ class Machine
 
   # TODO disk/nic samples should be related by IDs, not times
   def to_samples_payload(machine_samples, start_time, end_time)
-    $logger.debug { "Averaging #{machine_samples.count} samples for machine: #{self.name}, time span: #{start_time} -> #{end_time}x" }
     payload = { start_time: start_time.iso8601,
                 end_time: end_time.iso8601,
                 machine: average_machine_samples(machine_samples.to_a),

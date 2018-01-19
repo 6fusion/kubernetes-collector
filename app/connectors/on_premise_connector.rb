@@ -27,7 +27,7 @@ class OnPremiseConnector
 
   def sync_samples
     start_time = Time.now
-    MachineSample.where(reading_at: { "$lt" => start_time - 5.minutes}, submitted_at: nil ).order_by(reading_at: 'ASC').first
+    oldest_sample = MachineSample.where(reading_at: { "$lt" => start_time - 5.minutes}, submitted_at: nil ).order_by(reading_at: 'ASC').first
     $logger.debug { "Oldest sample: #{oldest_sample.inspect}" }
 
     if oldest_sample

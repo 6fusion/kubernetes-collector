@@ -30,7 +30,7 @@ class OnPremiseConnector
     oldest_sample = MachineSample.where(reading_at: { "$lte" => Time.now - 5.minutes}, submitted_at: nil ).order_by(reading_at: 'ASC').first
     $logger.debug { "Oldest sample: #{oldest_sample.reading_at}" }
 
-    while oldest_sample and (oldest_sample.reading_at > 5.minutes.ago)
+    while oldest_sample and (oldest_sample.reading_at < 5.minutes.ago)
       start_time = oldest_sample.reading_at
       end_time = start_time + 5.minutes
       $logger.debug { "Submitting samples for range: #{start_time} -> #{end_time}" }

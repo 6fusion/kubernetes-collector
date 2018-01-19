@@ -148,17 +148,11 @@ class InventoryCollector
       machine.cpu_speed_hz = host.host_cpus.first.speed_hz  # quotas?
       machine.memory_bytes = memory_capacity
 
-
-      $logger.info { "Saving container #{machine.name}? #{machine.changed?}" }
-      $logger.debug { "Changed attributse: #{machine.changed_attributes}" }
-      $logger.debug { machine.inspect }
       machine.save!
+
       any_container = machine
 
       @data[:running_machines_vnames] << machine.custom_id
-
-      #disk_map = kube_node_attributes['disk_map']
-  #       storage_bytes = collect_disk_storage_bytes(disk_map)
 
       collect_machine_disks(machine, 1) #storage_bytes)
       collect_machine_nics(machine)

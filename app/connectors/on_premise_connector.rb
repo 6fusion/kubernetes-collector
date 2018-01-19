@@ -76,7 +76,7 @@ class OnPremiseConnector
   end
 
   def sync_machines
-    $logger.debug { "Syncing machines" }
+    $logger.info { "Syncing containers" }
     Machine.where(deleted_at: nil).hint(deleted_at: 1).each do |machine|
       @thread_pool.post do
         begin

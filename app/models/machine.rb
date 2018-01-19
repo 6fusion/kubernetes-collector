@@ -38,7 +38,6 @@ class Machine
   has_many :machine_samples
   belongs_to :pod
 
-
   index({ status: 1, is_pod_container: 1 }, { background: true })
   index({ deleted_at: 1 }, { expire_after_seconds: 1.day, background: true })
 

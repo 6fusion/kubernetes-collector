@@ -149,7 +149,8 @@ class InventoryCollector
       machine.memory_bytes = memory_capacity
 
 
-      $logger.info { "Saving container #{machine.name}" }
+      $logger.info { "Saving container #{machine.name}? #{machine.changed?}" }
+      $logger.debug { "Changed attributse: #{machine.changed_attributes}" }
       $logger.debug { machine.inspect }
       machine.save!
       any_container = machine

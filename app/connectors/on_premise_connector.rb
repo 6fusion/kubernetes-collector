@@ -5,10 +5,11 @@ class OnPremiseConnector
   def initialize(config)
     @config       = config
     @last_run = Time.at(0)
+    # Some not particularly tested numbers to keep API submissions humming along, and not blocked by IO
     @thread_pool = Concurrent::ThreadPoolExecutor.new(
         min_threads: 2,
-        max_threads: 5,
-        max_queue: 12,
+        max_threads: 6,
+        max_queue: 10,
         fallback_policy: :caller_runs )
   end
 
@@ -26,25 +27,22 @@ class OnPremiseConnector
   end
 
   def sync_samples
-    start_time = Time.now
-    oldest_sample = MachineSample.where(reading_at: { "$lt" => start_time - 5.minutes}, submitted_at: nil ).order_by(reading_at: 'ASC').first
-    $logger.debug { "Oldest sample: #{oldest_sample.inspect}" }
+    oldest_sample = MachineSample.where(reading_at: { "$lte" => Time.now - 5.minutes}, submitted_at: nil ).order_by(reading_at: 'ASC').first
 
-    if oldest_sample
+    while oldest_sample and (oldest_sample.reading_at > 5.minutes.ago)
       start_time = oldest_sample.reading_at
       end_time = start_time + 5.minutes
-      # FIXME we lose the last X minutes of readings for deleted machines with this logic.
-      #  switch to distinct machine_id?
-      Machine.where(status: 'poweredOn').each do |machine|
-        # @thread_pool.post do
+      $logger.debug { "Submitting samples for range: #{start_time} -> #{end_time}" }
+      MachineSample.and([ reading_at: (start_time..end_time), submitted_at: nil])
+        .distinct(:machine_id).each do |machine_id|
+        @thread_pool.post do
           begin
+            machine = Machine.find(machine_id)
             machine_samples = machine.machine_samples.where(reading_at: (start_time..end_time), submitted_at: nil)
-            if machine_samples.count > 0
-              $logger.debug { "Submitting #{machine_samples.count} samples for #{machine.name}" }
-              payload = machine.to_samples_payload(machine_samples, start_time, end_time)
-              endpoint = "machines/#{machine.remote_id}/samples"
-              request_api(endpoint, :post, @config, payload)
-            end
+            $logger.debug { "Submitting #{machine_samples.count} samples for #{machine.name}" }
+            payload = machine.to_samples_payload(machine_samples, start_time, end_time)
+            endpoint = "machines/#{machine.remote_id}/samples"
+            request_api(endpoint, :post, @config, payload)
           rescue => e
             # what errors should we continue on; what should we abort the app on??
             # super gross, but hard to avoid without detangling / NoSQLfying the machine/disk/nic sample code
@@ -55,10 +53,12 @@ class OnPremiseConnector
             $logger.debug e.backtrace.join("\n")
           end
         end
-      # end
-      # @thread_pool.shutdown
-      # @thread_pool.wait_for_termination
+      end
+
+      oldest_sample = MachineSample.where(reading_at: { "$lte" => Time.now - 5.minutes}, submitted_at: nil ).order_by(reading_at: 'ASC').first
     end
+    @thread_pool.shutdown
+    @thread_pool.wait_for_termination
   end
 
   def sync_infrastructures

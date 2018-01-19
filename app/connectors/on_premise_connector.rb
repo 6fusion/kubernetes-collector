@@ -7,7 +7,7 @@ class OnPremiseConnector
     @last_run = Time.at(0)
     @thread_pool = Concurrent::ThreadPoolExecutor.new(
         min_threads: 2,
-        max_threads: 10,
+        max_threads: 5,
         max_queue: 12,
         fallback_policy: :caller_runs )
   end
@@ -27,16 +27,16 @@ class OnPremiseConnector
 
   def sync_samples
     start_time = Time.now
-    oldest_sample = MachineSample.where(reading_at: { "$lt" => start_time - 5.minutes}, submitted_at: nil )
-                                 .order_by(reading_at: 'ASC')
-                                 .first
+    MachineSample.where(reading_at: { "$lt" => start_time - 5.minutes}, submitted_at: nil ).order_by(reading_at: 'ASC').first
     $logger.debug { "Oldest sample: #{oldest_sample.inspect}" }
 
     if oldest_sample
       start_time = oldest_sample.reading_at
       end_time = start_time + 5.minutes
+      # FIXME we lose the last X minutes of readings for deleted machines with this logic.
+      #  switch to distinct machine_id?
       Machine.where(status: 'poweredOn').each do |machine|
-        @thread_pool.post do
+        # @thread_pool.post do
           begin
             machine_samples = machine.machine_samples.where(reading_at: (start_time..end_time), submitted_at: nil)
             if machine_samples.count > 0
@@ -55,9 +55,9 @@ class OnPremiseConnector
             $logger.debug e.backtrace.join("\n")
           end
         end
-      end
-      @thread_pool.shutdown
-      @thread_pool.wait_for_termination
+      # end
+      # @thread_pool.shutdown
+      # @thread_pool.wait_for_termination
     end
   end
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require_relative '../config/defaults'
 Thread.abort_on_exception = true
+STDOUT.sync = true
 
 first_try = true
 begin

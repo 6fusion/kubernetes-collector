@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require_relative '../config/defaults'
+STDOUT.sync = true
 
 $logger.info 'Initializing Kubernetes Inventory Collector'
 

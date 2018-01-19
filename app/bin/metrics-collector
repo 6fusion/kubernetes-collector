@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 require_relative '../config/defaults'
-
 Thread.abort_on_exception = true
+STDOUT.sync = true
+
 $logger.info 'Initializing Kubernetes Metrics Collector'
 
 config = Inventory::load_configuration($logger)

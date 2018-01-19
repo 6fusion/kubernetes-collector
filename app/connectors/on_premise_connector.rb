@@ -5,7 +5,6 @@ class OnPremiseConnector
   def initialize(config)
     @config       = config
     @last_run = Time.at(0)
-    @infrastructure = Infrastructure.first           # Needed for submitting machines; there's only ever 1 infrastructure
     @thread_pool = Concurrent::ThreadPoolExecutor.new(
         min_threads: 2,
         max_threads: 10,
@@ -18,6 +17,7 @@ class OnPremiseConnector
     start_time = Time.now
 
     sync_infrastructures
+    @infrastructure = Infrastructure.first    # Needed for submitting machines; there's only ever 1 infrastructure
     sync_machines
     sync_samples
 

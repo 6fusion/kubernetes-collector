@@ -10,12 +10,12 @@ metadata:
   name: mongo
   namespace: 6fusion-kubernetes-collector
   labels:
-    6fusion-app: mongo
+    app: mongodb
 spec:
   ports:
   - port: 27017
   selector:
-    6fusion-app: mongo
+    app: mongodb
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -25,12 +25,12 @@ metadata:
 spec:
   replicas: 1
   selector:
-    6fusion-app: mongo
+    app: mongodb
   template:
     metadata:
       name: mongo
       labels:
-        6fusion-app: mongo
+        app: mongodb
     spec:
       containers:
       - name: mongo

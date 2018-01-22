@@ -10,6 +10,6 @@ class NicSample
 
   belongs_to :nic
 
-  index({ reading_at: 1 })
+  index({ reading_at: 1, nic_id: 1 }, { unique: true, sparse: true })
   index({ submitted_at: 1 }, { expire_after_seconds: 30.minutes, background: true, sparse: true })
 end

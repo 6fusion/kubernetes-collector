@@ -3,6 +3,21 @@ require_relative '../config/defaults'
 Thread.abort_on_exception = true
 STDOUT.sync = true
 
+first_try = true
+begin
+  $logger.debug { "Creating mongodb indexes" }
+  Mongoid::Tasks::Database::create_indexes
+rescue => e
+  if first_try
+    $logger.info { "Index change detected; recreating" }
+    Mongoid::Tasks::Database::remove_indexes
+    retry
+  else
+    raise e
+  end
+end
+
+
 $logger.info 'Initializing Kubernetes Metrics Collector'
 
 config = Inventory::load_configuration($logger)

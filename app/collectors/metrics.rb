@@ -11,39 +11,45 @@ class MetricsCollector
     machines = 0
 
     Machine.where(status: 'poweredOn', is_pod_container: true).each do |machine|
-      machines += 1
-      reading_at, pod_summary = get_pod_usage(machine)
+      begin
+        machines += 1
+        reading_at, pod_summary = get_pod_usage(machine)
 
-      if pod_summary
-        $logger.debug { "Saving disk usage for #{machine.name}@#{reading_at}: #{pod_summary['usage_bytes']}" }
-        machine.disks.first.disk_samples.create!(reading_at: reading_at, usage_bytes: pod_summary['usage_bytes'])
+        if pod_summary
+          $logger.debug { "Saving disk usage for #{machine.name}@#{reading_at}: #{pod_summary['usage_bytes']}" }
+          machine.disks.first.disk_samples.create!(reading_at: reading_at, usage_bytes: pod_summary['usage_bytes'])
 
-        previous = NicSample.where(machine_custom_id: machine.custom_id).order_by(reading_at: :desc).first
-        # TODO this algorithm should be in the code below as well? (i.e., cpu, disk_io)
-        if previous
-          duration = reading_at - previous.reading_at
-          next if duration == 0
-          transmit_rate = (pod_summary['network_tx'] - previous.network_tx).to_f / duration
-          receive_rate = (pod_summary['network_rx'] - previous.network_rx).to_f / duration
-          machine.nics.first.nic_samples.create!(machine_custom_id: machine.custom_id,
-                                                 reading_at: reading_at,
-                                                 network_tx: pod_summary['network_tx'],
-                                                 network_rx: pod_summary['network_rx'],
-                                                 transmit_bytes_per_second: transmit_rate,
-                                                 receive_bytes_per_second: receive_rate)
+          previous = NicSample.where(machine_custom_id: machine.custom_id).order_by(reading_at: :desc).first
+          # TODO this algorithm should be in the code below as well? (i.e., cpu, disk_io)
+          if previous
+            duration = reading_at - previous.reading_at
+            next if duration == 0
+            transmit_rate = (pod_summary['network_tx'] - previous.network_tx).to_f / duration
+            receive_rate = (pod_summary['network_rx'] - previous.network_rx).to_f / duration
+            machine.nics.first.nic_samples.create!(machine_custom_id: machine.custom_id,
+                                                   reading_at: reading_at,
+                                                   network_tx: pod_summary['network_tx'],
+                                                   network_rx: pod_summary['network_rx'],
+                                                   transmit_bytes_per_second: transmit_rate,
+                                                   receive_bytes_per_second: receive_rate)
+          else
+            # else - since we want a rate, we can't do anything until we have at least 1 prior sample
+            machine.nics.first.nic_samples.create!(machine_custom_id: machine.custom_id,
+                                                   reading_at: reading_at,
+                                                   network_tx: pod_summary['network_tx'],
+                                                   network_rx: pod_summary['network_rx'])
+          end
+
+          # The OnPrem connector code does a MachineSamples.where... so we need to create a dummy sample for the above samples to get picked up
+          machine_sample = machine.machine_samples.create!(reading_at: reading_at)
         else
-          # else - since we want a rate, we can't do anything until we have at least 1 prior sample
-          machine.nics.first.nic_samples.create!(machine_custom_id: machine.custom_id,
-                                                 reading_at: reading_at,
-                                                 network_tx: pod_summary['network_tx'],
-                                                 network_rx: pod_summary['network_rx'])
+          $logger.warn { "pod summary is null for #{machine.name}" }
         end
-
-        # The OnPrem connector code does a MachineSamples.where... so we need to create a dummy sample for the above samples to get picked up
-        machine_sample = machine.machine_samples.create!(reading_at: reading_at)
-
-      else
-        $logger.warn { "pod summary is null for #{machine.name}" }
+      rescue => e
+        # E11000=duplicate key error, which is OK, since duplicate readings are expected with cadvisor
+        e.message.start_with?('E11000') ?
+          $logger.debug { "#{e.message} raised for #{machine.name} sample at #{current_sample['timestamp']}" } :
+          $logger.warn { "#{e.message} raised for #{machine.name} sample at #{current_sample['timestamp']}" }
       end
     end
     $logger.debug { "Metered summaries for #{machines} infrastructure pods" }
@@ -60,11 +66,10 @@ class MetricsCollector
 
         # begin/rescue for 404s?
         metrics = KubeletAPI::stats(@config, machine)
-
         previous_sample = nil
 
-        samples = metrics['stats'] #[metrics.keys.first]['stats']
-        #$logger.debug { "raw stats for #{machine.name}: #{samples}" }
+        samples = metrics['stats']
+        $logger.debug { "Raw 'stats' for #{machine.name}: #{samples}" } if ENV['DUMP_RAW_STATS']
 
         samples.each do |sample|
           current_sample = parse_sample(sample)
@@ -94,7 +99,10 @@ class MetricsCollector
               end
               # else, if current_cpu_usage < previous_cpu_usage, fall through and set previous=current; but don't create a sample for this time period (likely a container start/restart)
             rescue => e
-              $logger.warn "#{e.message} raised for #{machine.name} sample at #{current_sample['timestamp']}"
+              # E11000=duplicate key error, which is OK, since duplicate readings are expected with cadvisor
+              e.message.start_with?('E11000') ?
+                $logger.debug { "#{e.message} raised for #{machine.name} sample at #{current_sample['timestamp']}" } :
+                $logger.warn { "#{e.message} raised for #{machine.name} sample at #{current_sample['timestamp']}" }
             end
           end
           previous_sample = current_sample

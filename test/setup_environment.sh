@@ -1,7 +1,7 @@
 kubeconfig=./test/kubeconfig
 kubectl="kubectl --kubeconfig $kubeconfig"
 
-kube_token=$(eval ${kubectl} exec -n 6fusion-kubernetes-collector $($kubectl get pod --selector=6fusion-app=mongo --no-headers=true -o jsonpath='{.items[0].metadata.name}') -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+kube_token=$(eval ${kubectl} exec -n 6fusion-kubernetes-collector $($kubectl get pod -n 6fusion-kubernetes-collector --selector=app=mongodb --no-headers=true -o jsonpath='{.items[0].metadata.name}') -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 kube_service=$(eval $kubectl get services -n default kubernetes -o jsonpath='{.spec.clusterIP}')
 
 vars="KUBERNETES_TOKEN=${kube_token}

@@ -9,6 +9,7 @@ begin
   Mongoid::Tasks::Database::create_indexes
 rescue => e
   if first_try
+    $logger.info { "Index change detected; recreating" }
     Mongoid::Tasks::Database::remove_indexes
     retry
   else

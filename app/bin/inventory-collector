@@ -13,7 +13,7 @@ begin
     File.write("/tmp/heartbeat", "")  # for kubernetes health check
     sleep INVENTORY_SCHEDULER_PERIOD
   end
-rescue Exception => e
+rescue => e
   $logger.error e
   raise e
 end

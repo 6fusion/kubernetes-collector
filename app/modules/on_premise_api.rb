@@ -10,7 +10,7 @@ module OnPremiseApi
                                              headers: { accept: :json, content_type: :json },
                                              verify_ssl: config.on_premise[:verify_ssl])
       JSON.parse(response.body)
-    rescue Exception => e
+    rescue => e
       $logger.error { e }
       $logger.debug { "payload: #{parameters.to_json}" }
       raise e

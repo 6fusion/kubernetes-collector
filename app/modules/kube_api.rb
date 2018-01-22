@@ -3,7 +3,7 @@ module KubeAPI
   def self.services(config, namespace)
     begin
       url = "#{config.kube[:url]}/namespaces/#{namespace['metadata']['name']}/services"
-      response = RestClient::Request.execute(:url => url, :method => :get, :headers => config.kube[:headers], :verify_ssl => config.kube[:verify_ssl])
+      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
       JSON.parse(response.body)
     rescue => e
       Logger.new(STDOUT).error "Error occurred retrieving services via the Kubernetes API at #{url}. See error details below:"
@@ -15,7 +15,7 @@ module KubeAPI
   def self.endpoints(config)
     begin
       url = "#{config.kube[:url]}/endpoints"
-      response = RestClient::Request.execute(:url => url, :method => :get, :headers => config.kube[:headers], :verify_ssl => config.kube[:verify_ssl])
+      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
       JSON.parse(response.body)
     rescue => e
       Logger.new(STDOUT).error "Error occurred retrieving services via the Kubernetes API at #{url}. See error details below:"
@@ -34,9 +34,9 @@ module KubeAPI
             else
               "#{config.kube[:url]}/namespaces/#{namespace['metadata']['name']}/pods"
             end
-      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl])
+      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
       JSON.parse(response.body)
-    rescue => e
+    rescue e
       Logger.new(STDOUT).error "Error occurred retrieving pods via the Kubernetes API at #{url}. See error details below:"
       message = e.message
       raise Exceptions::CollectorException, message
@@ -46,7 +46,7 @@ module KubeAPI
   def self.pod_status(config, pod)
     begin
       url = "#{config.kube[:url]}/namespaces/#{pod.namespace}/pods/#{pod.name}"
-      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl])
+      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
       JSON.parse(response.body)['status']
     rescue => e
       Logger.new(STDOUT).error "Error occurred retrieving pods via the Kubernetes API at #{url}. See error details below:"
@@ -58,7 +58,7 @@ module KubeAPI
   def self.nodes(config)
     begin
       url = "#{config.kube[:url]}/nodes"
-      response = RestClient::Request.execute(:url => url, :method => :get, :headers => config.kube[:headers], :verify_ssl => config.kube[:verify_ssl])
+      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
       JSON.parse(response.body)
     rescue => e
       Logger.new(STDOUT).error "Error occurred retrieving nodes via the Kubernetes API at #{url}. See error details below:"
@@ -69,7 +69,7 @@ module KubeAPI
   def self.node(config, node)
     begin
       url = "#{config.kube[:url]}/nodes/#{node}"
-      response = RestClient::Request.execute(:url => url, :method => :get, :headers => config.kube[:headers], :verify_ssl => config.kube[:verify_ssl])
+      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
       JSON.parse(response.body)
     rescue => e
       Logger.new(STDOUT).error "Error occurred retrieving nodes via the Kubernetes API at #{url}. See error details below:"
@@ -80,11 +80,13 @@ module KubeAPI
 
   def self.request(config, endpoint, method = :get)
     begin
-      response = RestClient::Request.execute(method: method, url: "#{config.kube[:url]}/#{endpoint}",
+      response = RestClient::Request.execute(method: method,
+                                             url: "#{config.kube[:url]}/#{endpoint}",
                                              headers: config.kube[:headers],
-                                             verify_ssl: config.kube[:verify_ssl])
+                                             verify_ssl: config.kube[:verify_ssl],
+                                             open_timeout: 5)
       JSON.parse(response.body)
-    rescue Exception => e
+    rescue => e
       Logger.new(STDOUT).error "Operational error with the Kubernetes API at #{config.kube[:url]}. See error details below:"
       message = e.message
       raise Exceptions::CollectorException, message
@@ -94,7 +96,7 @@ module KubeAPI
   def self.namespaces(config)
     begin
       url = "#{config.kube[:url]}/namespaces"
-      response = RestClient::Request.execute(:url => url, :method => :get, :headers => config.kube[:headers], :verify_ssl => config.kube[:verify_ssl])
+      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
 
       Logger.new(STDOUT).debug "Namespaces response: #{response.code}"
       Logger.new(STDOUT).debug "Namespaces response: #{response.body}"

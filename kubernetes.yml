@@ -42,6 +42,13 @@ objects:
           volumeMounts:
           - mountPath: /data/db
             name: mongodb-volume
+          resources:
+            limits:
+              memory: 2Gi
+            requests:
+              memory: 500Mi
+          args:
+            - --wiredTigerCacheSizeGB=0.5
         volumes:
         - name: mongodb-volume
           emptyDir: {}

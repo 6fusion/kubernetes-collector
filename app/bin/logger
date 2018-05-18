@@ -12,7 +12,12 @@ namespace="6fusion-kubernetes-collector"
 begin
   while true
 
+    # run app/bin/inventory-collector to "seed" mongo with all cluster pods
+    #    ^^ runs for ever; ctrl-c to kill it once it's run once
+
     # Pod.all.select{||}.each do |pod|     ## Asks Mongo for all pods, filter down to only the pods with our namespace 6fusion-kubernetes-collector
+
+    # p pod
 
     # use kube_api::logs(config,pod) to retrieve logs
 

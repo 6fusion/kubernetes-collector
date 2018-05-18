@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+require_relative '../config/defaults'
+STDOUT.sync = true
+
+$logger.info 'Initializing Kubernetes Logger Collector'
+
+# Load configuration values
+config = Inventory::load_configuration($logger)
+
+namespace="6fusion-kubernetes-collector"
+
+begin
+  while true
+
+    # Pod.all.select{||}.each do |pod|     ## Asks Mongo for all pods, filter down to only the pods with our namespace 6fusion-kubernetes-collector
+
+    # use kube_api::logs(config,pod) to retrieve logs
+
+    # search output for ERROR or FATAL
+    # save lines with ERROR/FATAL to mongo via Log.new(params).save
+
+    # end
+
+    sleep 60
+  end
+rescue => e
+  $logger.error e
+  raise e
+end

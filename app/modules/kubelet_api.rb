@@ -60,6 +60,23 @@ module KubeletAPI
       raise Exceptions::CollectorException, e.message
     end
   end
-
+  
+  def self.logs(config, pod)
+    url = "#{config.kube[:url]}/namespaces/#{pod.namespace}/pods/#{pod.name}/log"
+    begin
+      response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
+      JSON.parse(response.body)['status']
+    rescue => e
+      Logger.new(STDOUT).error "Error occurred retrieving pods via the Kubernetes API at #{url}. See error details below:"
+      message = e.message
+      l.debug { "Query URL: #{url} " }
+      l.debug { e.backtrace.join("\n") }
+      raise Exceptions::CollectorException, message
+    end
+  end
+    # curl -k -v -XGET -H "Authorization: Bearer $TOKEN" -H "Accept: application/json, */*" -H "User-Agent: kubectl/v1.9.2 (darwin/amd64) kubernetes/5fa2db2" 
+    # https://cluster02.analytics.dev.6fusion.com/api/v1/namespaces/default/pods/aws-node-watchdog-cc68fdd75-56r9r/log
+    # determine whether we want to use kubeclient
+    # how to operate in the localhost 
 
 end

@@ -258,7 +258,8 @@ class InventoryCollector
                       response['items']
                     end
   end
-
+# define logs 
+def 
 
 
 end

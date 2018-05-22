@@ -259,7 +259,7 @@ class InventoryCollector
                     end
   end
 # define logs 
-def 
+
 
 
 end

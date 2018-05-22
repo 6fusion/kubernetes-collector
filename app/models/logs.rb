@@ -4,26 +4,28 @@
 # "message":"Slf4jLogger started","context":"default"}
 class Log 
     include Mongoid::Document
+    include Mongoid::Timestamps
 
-    field :timestamp,    type: String     
+    field :time,    type: String     
     field :level,        type: String
-    field :thread,       type: String
-    field :logger,       type: String
+    # field :thread,       type: String
+    # field :logger,       type: String
     field :message,      type: String
-    field :context,      type: String
+    # field :context,      type: String
 
     def initialize(params={})
         # The hash of params returned from the Kubernetes API contains a lot more fields than we need, so we filter down to just the required stuff
         if params.empty?
           super
         else    
-          super(timestamp: params['timestamp'],
-                level: params['level'],
-                thread: params['thread'],
-                logger: params['logger'],
-                message: params['message'],
-                context: params['context'],
-    
+        super(
+                time: params[:time],
+                level: params[:level],
+        #         thread: params['thread'],
+        #         logger: params['logger'],
+                message: params[:message]
+               # context: params['context'])
+        )
         end
       end
     

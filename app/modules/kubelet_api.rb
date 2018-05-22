@@ -62,12 +62,20 @@ module KubeletAPI
   end
   
   def self.logs(config, pod)
-    url = "#{config.kube[:url]}/namespaces/#{pod.namespace}/pods/#{pod.name}/log"
+    url = "#{config.kube[:url]}/namespaces/#{pod.namespace}/pods/#{pod.pod_name}/log"
     begin
       response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
-      JSON.parse(response.body)['status']
+      l = Logger.new(STDOUT)
+     #l.debug {JSON.generate(response.body.split("\n").each_slice(1).map{|s| {message:s[0]}})}
+      response.body    
+     #JSON.generate(response.body.split("\n").each_slice(1).map{|s| {message:s[0]}})
+      #l.debug {JSON.generate(response.body)}
+      #binding.pry
+      #response.body.split("\n") #['status']
+      #split("\n")
     rescue => e
-      Logger.new(STDOUT).error "Error occurred retrieving pods via the Kubernetes API at #{url}. See error details below:"
+      l = Logger.new(STDOUT)
+      l.error "Error occurred retrieving pods via the Kubernetes API at #{url}. See error details below:"
       message = e.message
       l.debug { "Query URL: #{url} " }
       l.debug { e.backtrace.join("\n") }

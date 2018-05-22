@@ -7,10 +7,71 @@ $logger.info 'Initializing Kubernetes Logger Collector'
 # Load configuration values
 config = Inventory::load_configuration($logger)
 
-namespace="6fusion-kubernetes-collector"
+namespace="uc6-dedicated"
+podname="uc6-console-alpha-q9jf7"
 
 begin
-  while true
+ # while true   
+     #Machine.where(namespace: namespace) do |m|
+   Machine.all.select{|m| (m.namespace == namespace) and (m.pod_name == podname)}.each do |m|
+      #m.all.select{|p| p.pod_name == podname}.each do |p|
+    #Machine.all.each{|m| p m.namespace,m.pod_name}.each  do |z|
+    # 20:25:10,852 ERROR [stderr] (jboss.deployment.unit."console-knob.yml".job_scheduler_Worker-1) /opt/6fusion/app/models/infrastructure_node_price.rb:49 warning: already initialized constant VALID_API_PARAMS
+   # md = " 20:25:10,852  ERROR [stderr] (jboss.deployment.unit.console-knob.yml.job_scheduler_Worker-1) /opt/6fusion/app/models/infrastructure_node_price.rb:49 warning: already initialized constant VALID_API_PARAMS"
+   # .match(/(\d+:\d+:\d{2}).*(ERROR|WARNING)\s+(.+)/)
+     #md[0] 
+ # binding.pry
+
+    log_response = KubeletAPI::logs(config, m)   
+   # puts  log_response #"|#{log_response}|"
+
+    log_response.split("\n").each_with_index do |line,i| 
+      # line.scan(/error/)
+       # new_line = line.split()
+     # JSON.generate(line) do |json_line|
+      #line.grep(/^error/) 
+     # if line.match(/Warning/i) 
+
+      if line.match(/ ERROR /) #or line.match(/warning/i)
+   
+        #line.matc(/(\d+:\d+:\d{2})/) 
+       md = line.match(/(\d+:\d+:\d{2}).*(ERROR)\s+(.+)/)
+       
+        # LOG_FORMAT = /(\d{2}:\d{2}:\d{2},\d{3}) (\w+) (.*)/
+      #  line.match(LOG_FORMAT)  { |z| line.new(*z.captures) }
+       # matches = /^(\S+).*ERROR\s(*)
+       
+       if md == nil 
+        puts "|#{i},#{line}|"
+       end
+     Log.new({time: Time.parse(md[1]),level:md[2],message:md[3]}).save
+     #   Log.new(message: line).save
+      puts "|#{line}|"
+      #  puts "|#{i},#{line}|"
+      end 
+
+     # json_ = JSON.generate(line) do |json_line|
+       # puts "|#{json_}|"
+      #binding.pry
+    #error_filter = split.grep(/^ERROR/).each do |error_line|
+    # line.each { |i| if i.match?(/ERROR/) == true
+    #                puts i 
+    #                end } 
+        #  split.match?(/ERROR/) do |error_line|
+                
+   #  split.find { |e| /error/ =~ e }.each do |error_line|
+     #      line.find { |e| /error/ =~ e }.each do |error_line|
+#puts "|#{error_line}|" 
+      # binding.pry
+    #l = Logger.new(STDOUT)
+    #l.debug {JSON.generate(response.body.split("\n"))}
+
+    # l.debug{ print log}
+    #l.debug {log}
+  #  binding.pry
+ # Log.new(message: line).save
+     #binding.pry 
+ 
 
     # run app/bin/inventory-collector to "seed" mongo with all cluster pods
     #    ^^ runs for ever; ctrl-c to kill it once it's run once
@@ -24,11 +85,13 @@ begin
     # search output for ERROR or FATAL
     # save lines with ERROR/FATAL to mongo via Log.new(params).save
 
-    # end
-
-    sleep 60
+     #end
+    end
   end
-rescue => e
+  #  sleep 60
+  #end
+ 
+  rescue => e
   $logger.error e
   raise e
-end
+  end

@@ -6,7 +6,7 @@ class Log
     include Mongoid::Document
     include Mongoid::Timestamps
 
-    field :time,    type: String     
+    field :time,    type: DateTime     
     field :level,        type: String
     # field :thread,       type: String
     # field :logger,       type: String

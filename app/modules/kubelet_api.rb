@@ -63,7 +63,7 @@ module KubeletAPI
   
   def self.logs(config, pod)
     puts pod.container_name
-    binding.pry
+   # binding.pry
     url = "#{config.kube[:url]}/namespaces/#{pod.namespace}/pods/#{pod.pod_name}/log?container=#{pod.container_name}"
    # puts url
   #  binding.pry

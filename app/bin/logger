@@ -20,9 +20,9 @@ begin
       # Machine.find(pod_name: p) do |m|
       puts "|#{m.container_name}| new m "
       if m.container_name != nil
-        binding.pry
+       # binding.pry
         log_response = KubeletAPI::logs(config, m)
-        binding.pry
+       #binding.pry
         #puts "|#{log_response}| shit fell out of the LOOP"
         log_response.split("\n").each_with_index do |line, i|
          

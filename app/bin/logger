@@ -1,131 +1,150 @@
 #!/usr/bin/env ruby
 require_relative "../config/defaults"
 STDOUT.sync = true
-
 $logger.info "Initializing Kubernetes Logger Collector"
-
 # Load configuration values
 config = Inventory::load_configuration($logger)
-
-namespace = "meter-manager"
-podname = "meter-cluster-manager-6cc668495f-xw9ws"
-
+#namespace = "meter-manager"
+Podname = ["uc6-controlroom-alpha-mhxrd", "meter-cluster-manager-6cc668495f-xw9ws", "6fusion-capacity-calculator-0.13-beta-mdwxh"]
+#podname2 = "meter-cluster-manager-6cc668495f-xw9ws"
+#podname = "uc6-controlroom-alpha-mhxrd"
 begin
   # while true
-  #Machine.where(namespace: namespace) do |m|
+  #Machine.where(namesspace: namespace) do |m|
   $logger.info "query the machine"
-  
-  #achine.where(namespace: "meter-manager").first do |m|
-  #Machine.where(:pod_name => podname).first do |m|
-    #puts "|#{m}| new m "
- # Machine.all.select { |m| (m.namespace == namespace) and (m.pod_name == podname) }.each do |m|
-    Machine.find_by(pod_name: podname) do |m|
-      puts "|#{m}| new m "
- 
-    #m.all.select{|p| p.pod_name == podname}.each do |p|
-    #Machine.all.each{|m| p m.namespace,m.pod_name}.each  do |z|
-    # 20:25:10,852 ERROR [stderr] (jboss.deployment.unit."console-knob.yml".job_scheduler_Worker-1) /opt/6fusion/app/models/infrastructure_node_price.rb:49 warning: already initialized constant VALID_API_PARAMS
-    # md = " 20:25:10,852  ERROR [stderr] (jboss.deployment.unit.console-knob.yml.job_scheduler_Worker-1) /opt/6fusion/app/models/infrastructure_node_price.rb:49 warning: already initialized constant VALID_API_PARAMS"
-    # .match(/(\d+:\d+:\d{2}).*(ERROR|WARNING)\s+(.+)/)
-    #md[0]
+  Podname.each do |p|
+    puts "|#{p}| new p "
     # binding.pry
-
-    log_response = KubeletAPI::logs(config, m)
-    puts "|#{log_response}| shit fell out of the LOOP"
-
-    log_response.split("\n").each_with_index do |line, i|
-      # line.scan(/error/)
-      # new_line = line.split()
-      # JSON.generate(line) do |json_line|
-      #line.grep(/^error/)
-      # if line.match(/Warning/i)
-
-      if line.match(/ ERROR /) or line.match(/ FATAL /)
-        
-        
-        #line.matc(/(\d+:\d+:\d{2})/)
-        #line.match(/(\d+:\d+:\d{2}).*(ERROR)\s+(.+)/) or
-        #md = line.match(/(\d+-\d+-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}).*(ERROR|FATAL)\s+(.+)/)
-        md = line.match(/(\d+-\d+-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}).*(ERROR|FATAL)\s.{43}\K\s+(.+)/)
-
-
-         binding.pry
-        # line.match(/(\d+-\d+-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}).*(ERROR|FATAL)\s+(?<=\]).*/)
-        # binding.pry
-        # LOG_FORMAT = /(\d{2}:\d{2}:\d{2},\d{3}) (\w+) (.*)/
-        #  line.match(LOG_FORMAT)  { |z| line.new(*z.captures) }
-        # matches = /^(\S+).*ERROR\s(*)
-        # if last_log = Log.order_by("time desc").first != nil
-        last_log = Log.order_by("time desc").first
-        # else
-        #   puts "last_log is nil"
-        #   last_time = DateTime.now - (100/24.0)
-        #   Log.new({time: last_time}).save
-        #   puts last_time
-        #   last_log = Log.order_by("time desc").first
-        # end  #two_hours_ago = DateTime.now - (2/24.0)
-        log_time = Time.parse(md[1])
-        log_level = md[2]
-        log_message = md[3]
-        if  log_message != " "
-          if last_log.nil? or (last_log.time.to_i < log_time.to_i) #and (last_log.time < log_time.subsec)
-          puts "going thru,    #{last_log},  #{log_time},#{log_level},#{log_message}"#log_time, last_log.time,#last_log.time.to_i , "added to the log line universe" #, last_log.time.subsec
-
-            if md == nil
-              puts "|#{i},#{line}|"
+    #Machine.all.select { |m| (m.pod_name == p)  }.each do |m|
+    Machine.all.where(pod_name: p).each do |m|
+      # Machine.find(pod_name: p) do |m|
+      puts "|#{m.container_name}| new m "
+      if m.container_name != nil
+        binding.pry
+        log_response = KubeletAPI::logs(config, m)
+        binding.pry
+        #puts "|#{log_response}| shit fell out of the LOOP"
+        log_response.split("\n").each_with_index do |line, i|
+         
+          if line.match(/ ERROR /) or line.match(/ FATAL /)
+            md = line.match(/(\d+-\d+-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}).*(ERROR|FATAL)\s.{43}\K\s+(.+)/) or md = line.match(/(\d+:\d+:\d{2},\d{3}).*(ERROR|FATAL)\s.+(\).*)/)
+            #binding.pry
+            puts "hurray #{md[1]},#{md[2]}, #{md[3]}"
+            # binding.pry
+            puts "|#{p}|"
+            # binding.pry
+            last_log = Log.any_of({:pod_name => p}).order_by("time desc").first
+            log_time = Time.parse(md[1])
+            log_level = md[2]
+            log_message = md[3]
+            if log_message != " "
+              if last_log.nil? or (last_log.time.to_i < log_time.to_i) #and (last_log.time < log_time.subsec)
+                puts "going thru,    #{last_log},  #{log_time},#{log_level},#{log_message}" #log_time, last_log.time,#last_log.time.to_i , "added to the log line universe" #, last_log.time.subsec
+                if md == nil
+                  puts "|#{i},#{line}|"
+                end
+                Log.new({pod_name: p, time: log_time, level: log_level, message: log_message}).save
+              else
+                puts log_time.to_i, last_log.time.to_i, "#{log_level},#{log_message} last_log is not less than md[1]"
+              end
             end
-          Log.new({time: log_time, level: log_level, message: log_message}).save
-          #   Log.new(message: line).save
-          #puts "|#{line}|"
-
-          #  puts "|#{i},#{line}|"
-           else
-            puts log_time.to_i, last_log.time.to_i, "#{log_level},#{log_message} last_log is not less than md[1]"
           end
         end
       end
     end
   end
   #  sleep 60
- 
-
 rescue => e
   $logger.error e
   raise e
 end
 
-      # json_ = JSON.generate(line) do |json_line|
-      # puts "|#{json_}|"
-      #binding.pry
-      #error_filter = split.grep(/^ERROR/).each do |error_line|
-      # line.each { |i| if i.match?(/ERROR/) == true
-      #                puts i
-      #                end }
-      #  split.match?(/ERROR/) do |error_line|
+#achine.where(namespace: "meter-manager").first do |m|
+#Machine.where(:pod_name => podname).first do |m|
+#puts "|#{m}| new m "
+#binding.pry
+# Machine.all.select { |m| (m.namespace == namespace) and (m.pod_name == podname) }.each do |m|
 
-      #  split.find { |e| /error/ =~ e }.each do |error_line|
-      #      line.find { |e| /error/ =~ e }.each do |error_line|
-      #puts "|#{error_line}|"
-      # binding.pry
-      #l = Logger.new(STDOUT)
-      #l.debug {JSON.generate(response.body.split("\n"))}
+#m.all.select{|p| p.pod_name == podname}.each do |p|
+#Machine.all.each{|m| p m.namespace,m.pod_name}.each  do |z|
+# 20:25:10,852 ERROR [stderr] (jboss.deployment.unit."console-knob.yml".job_scheduler_Worker-1) /opt/6fusion/app/models/infrastructure_node_price.rb:49 warning: already initialized constant VALID_API_PARAMS
+# md = " 20:25:10,852  ERROR [stderr] (jboss.deployment.unit.console-knob.yml.job_scheduler_Worker-1) /opt/6fusion/app/models/infrastructure_node_price.rb:49 warning: already initialized constant VALID_API_PARAMS"
+# .match(/(\d+:\d+:\d{2}).*(ERROR|WARNING)\s+(.+)/)
+#md[0]
+# binding.pry
 
-      # l.debug{ print log}
-      #l.debug {log}
-      #  binding.pry
-      # Log.new(message: line).save
-      #binding.pry
+#puts line
+# line.scan(/error/)
+# new_line = line.split()
+# JSON.generate(line) do |json_line|
+#line.grep(/^error/)
+# if line.match(/Warning/i)
 
-      # run app/bin/inventory-collector to "seed" mongo with all cluster pods
-      #    ^^ runs for ever; ctrl-c to kill it once it's run once
+#puts line
+# line.scan(/error/)
+# new_line = line.split()
+# JSON.generate(line) do |json_line|
+#line.grep(/^error/)
+# if line.match(/Warning/i)
 
-      # Pod.all.select{||}.each do |pod|     ## Asks Mongo for all pods, filter down to only the pods with our namespace 6fusion-kubernetes-collector
+# puts line
+#line.matc(/(\d+:\d+:\d{2})/)
+#line.match(/(\d+:\d+:\d{2}).*(ERROR)\s+(.+)/) or
+#md = line.match(/(\d+-\d+-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}).*(ERROR|FATAL)\s+(.+)/)md
+# line.match(/(\d+-\d+-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}).*(ERROR|FATAL)\s+(?<=\]).*/)
+# binding.pry
+# LOG_FORMAT = /(\d{2}:\d{2}:\d{2},\d{3}) (\w+) (.*)/
+#  line.match(LOG_FORMAT)  { |z| line.new(*z.captures) }
+# matches = /^(\S+).*ERROR\s(*)
+# if last_log = Log.order_by("time desc").first != nil
 
-      # p pod
+#puts "|#{last_log.pod_name},#{last_log.time}|"
+# binding.pry
+#  binding.pry
+#puts last_log.pod_name
+#  binding.pry        # else
+#   puts "last_log is nil"
+#   last_time = DateTime.now - (100/24.0)
+#   Log.new({time: last_time}).save
+#   puts last_time
+#   last_log = Log.order_by("time desc").first
+# end  #two_hours_ago = DateTime.now - (2/24.0)
+#   Log.new(message: line).save
+#puts "|#{line}|"
+#  puts "|#{i},#{line}|"
 
-      # use kube_api::logs(config,pod) to retrieve logs
+# json_ = JSON.generate(line) do |json_line|
+# puts "|#{json_}|"
+#binding.pry
+#error_filter = split.grep(/^ERROR/).each do |error_line|
+# line.each { |i| if i.match?(/ERROR/) == true
+#                puts i
+#                end }
+#  split.match?(/ERROR/) do |error_line|
 
-      # search output for ERROR or FATAL
-      # save lines with ERROR/FATAL to mongo via Log.new(params).save
+#  split.find { |e| /error/ =~ e }.each do |error_line|
+#      line.find { |e| /error/ =~ e }.each do |error_line|
+#puts "|#{error_line}|"
+# binding.pry
+#l = Logger.new(STDOUT)
+#l.debug {JSON.generate(response.body.split("\n"))}
 
-      #end
+# l.debug{ print log}
+#l.debug {log}
+#  binding.pry
+# Log.new(message: line).save
+#binding.pry
+
+# run app/bin/inventory-collector to "seed" mongo with all cluster pods
+#    ^^ runs for ever; ctrl-c to kill it once it's run once
+
+# Pod.all.select{||}.each do |pod|     ## Asks Mongo for all pods, filter down to only the pods with our namespace 6fusion-kubernetes-collector
+
+# p pod
+
+# use kube_api::logs(config,pod) to retrieve logs
+
+# search output for ERROR or FATAL
+# save lines with ERROR/FATAL to mongo via Log.new(params).save
+
+#end

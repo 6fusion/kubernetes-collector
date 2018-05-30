@@ -8,7 +8,7 @@ class Log
 
     field :time,    type: DateTime     
     field :level,        type: String
-    # field :thread,       type: String
+   field :pod_name,       type: String
     # field :logger,       type: String
     field :message,      type: String
     # field :context,      type: String
@@ -18,16 +18,16 @@ class Log
         if params.empty?
           super
         else    
-        super(
+        super(  pod_name: params[:pod_name],
                 time: params[:time],
                 level: params[:level],
-        #         thread: params['thread'],
+                 message: params[:message]
         #         logger: params['logger'],
-                message: params[:message]
+            
                # context: params['context'])
         )
         end
-      end
-    
     end
+    
+end
     

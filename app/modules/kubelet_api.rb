@@ -62,9 +62,16 @@ module KubeletAPI
   end
   
   def self.logs(config, pod)
-    url = "#{config.kube[:url]}/namespaces/#{pod.namespace}/pods/#{pod.pod_name}/log"
+    puts pod.container_name
+    binding.pry
+    url = "#{config.kube[:url]}/namespaces/#{pod.namespace}/pods/#{pod.pod_name}/log?container=#{pod.container_name}"
+   # puts url
+  #  binding.pry
     begin
       response = RestClient::Request.execute(url: url, method: :get, headers: config.kube[:headers], verify_ssl: config.kube[:verify_ssl], open_timeout: 5)
+     # RestClient.log = 'stdout'
+      #puts response.inspect
+     # binding.pry
       l = Logger.new(STDOUT)
      #l.debug {JSON.generate(response.body.split("\n").each_slice(1).map{|s| {message:s[0]}})}
       response.body    

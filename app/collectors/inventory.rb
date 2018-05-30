@@ -114,6 +114,7 @@ class InventoryCollector
       end
       container_id = container['containerID']&.sub('docker://', '')
       container_name = container['name']
+      puts "|#{container},!!!!!!!!!!!!!#{container_name}|"
       container_image = container['image']
 
       next unless container_id and container_name and container_image

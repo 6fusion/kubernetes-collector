@@ -82,3 +82,11 @@ The MongoDB cache in this pod will be exposed through a Kubernetes service calle
 ##### K8scollector metrics pod
 This pod named `6fusion-k8scollector-metrics` will run as a **Replication Controller** so depending on the amount of containers running in the whole cluster, it can be scaled horizontally at any time with the amount of replicas needed to satisfy the metrics collection in a short convenient amount of time. It contains the following container:
 * `k8scollector-metrics`: the container that collects the metrics of the machines in the cluster
+
+
+#### Collector logging development
+1. kubeconfig should be pointed at AWS development environment
+2. Connect to VPN of AWS cluster
+3. run script test/setup_environment.sh for environmental variables 
+4. on fresh install collect inventory metrics app/bin/inventory-collector
+5. to run the logger metrics app/bin/logger

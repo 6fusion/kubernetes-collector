@@ -23,12 +23,13 @@ include OnPremiseApi
 include Exceptions
 
 namespace = File.readable?('/var/run/secrets/kubernetes.io/serviceaccount/namespace') ? File.read('/var/run/secrets/kubernetes.io/serviceaccount/namespace') : '6fusion-kubernetes-collector'
+kubernetes_domain = ENV['KUBERNETES_DOMAIN_NAME']
 
 Mongoid::Config.load_configuration({clients: {default: {
                                                 database: '6fusion',
                                                 options: { min_pool_size: 10,
                                                            max_pool_size: 100 },
-                                                hosts:   [ "mongo.#{namespace}.svc.cluster.local:27017" ] } } })
+                                                hosts:   [ "mongo.#{namespace}.svc.#{kubernetes_domain}:27017" ] } } })
 
 $logger = Logger.new(STDOUT)
 $logger.level = ENV['LOG_LEVEL'] || Logger::INFO

@@ -23,7 +23,7 @@ include OnPremiseApi
 include Exceptions
 
 namespace = File.readable?('/var/run/secrets/kubernetes.io/serviceaccount/namespace') ? File.read('/var/run/secrets/kubernetes.io/serviceaccount/namespace') : '6fusion-kubernetes-collector'
-kubernetes_domain = ENV['KUBERNETES_DOMAIN_NAME']
+kubernetes_domain = ENV['KUBERNETES_DOMAIN_NAME'] || 'cluster.local'
 
 Mongoid::Config.load_configuration({clients: {default: {
                                                 database: '6fusion',
